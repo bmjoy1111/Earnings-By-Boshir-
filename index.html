@@ -99,7 +99,7 @@
                     <div class="task-card" style="border: 1px solid var(--primary-green);">
                         <div style="display:flex; align-items:center; gap:15px;">
                             <div class="task-icon" style="background: rgba(50, 205, 50, 0.1); color: var(--primary-green);"><i class="fas fa-user-plus"></i></div>
-                            <div><b>Refer & Earn</b><br><small style="color:gray;">Invite Your Friend and earn Money easy from hare</small></div>
+                            <div><b>Refer & Earn Money 💰</b><br><small style="color:gray;">Share with friends and earn together</small></div>
                         </div>
                         <button class="btn-action" onclick="shareReferral()">Invite</button>
                     </div>
@@ -194,7 +194,10 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const MONETAG_LINK = "https://otieu.com/4/10517163";
-        const APP_LINK = "https://your-app-link.com"; 
+        
+        // আপনার দেওয়া সঠিক লিঙ্কটি এখানে বসানো হয়েছে
+        const APP_LINK = "https://trees-bay.vercel.app/"; 
+        
         let currentUser = null;
 
         window.onload = () => {
@@ -229,14 +232,19 @@
             }
         }
 
+        // আপনার নির্দিষ্ট মেসেজসহ রেফারেল শেয়ার লজিক
         function shareReferral() {
             if(!currentUser) return;
-            const text = `Invite Your Friend and earn Money easy from hare. \n\nApp Link: ${APP_LINK} \nMy Referral Code: ${currentUser.refCode}`;
+            const message = `Join thin app and earnings money easy 💰\n\nRefer Code: ${currentUser.refCode}\nApp Link: ${APP_LINK}`;
+            
             if(navigator.share) {
-                navigator.share({ title: "tree's", text: text }).catch(console.error);
+                navigator.share({
+                    title: "tree's Premium",
+                    text: message
+                }).catch(console.error);
             } else {
-                navigator.clipboard.writeText(text);
-                alert("Referral Link & Code Copied!");
+                navigator.clipboard.writeText(message);
+                alert("Referral Message & Link Copied!");
             }
         }
 
@@ -320,15 +328,10 @@
 
         function requestWithdraw() {
             const amount = document.getElementById('w-amount').value;
-            const method = document.getElementById('w-method').value;
             const number = document.getElementById('w-number').value;
             if(amount < 5000) return alert("Min 5000 Coins!");
             if(!number) return alert("Enter Number!");
             alert("Withdrawal Request Sent!");
         }
 
-        function handleLogout() { localStorage.clear(); location.reload(); }
-        function copyRef() { navigator.clipboard.writeText(currentUser.refCode); alert("Copied!"); }
-    </script>
-</body>
-</html>
+        function handleLogout(
