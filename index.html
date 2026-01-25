@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tree's | Premium</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src='//libtl.com/sdk.js' data-zone='10516961' data-sdk='show_10516961'></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary-green: #32cd32; --bg-dark: #080808; --card-bg: #121212; --text-gray: #a0a0a0; --accent-blue: #0088cc; --gold: #fbbc05; }
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: var(--bg-dark); color: white; user-select: none; overflow-x: hidden; }
+        
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .loader { border: 3px solid #222; border-top: 3px solid var(--primary-green); border-radius: 50%; width: 45px; height: 45px; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .auth-container { padding: 30px; display: none; height: 100vh; flex-direction: column; justify-content: center; max-width: 400px; margin: auto; }
+        #main-app { display: none; padding-bottom: 90px; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid #1a1a1a; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
+        .brand-name { font-size: 1.2rem; font-weight: 800; color: white; letter-spacing: 0.5px; }
+        .brand-name span { color: var(--primary-green); }
+
+        .container { padding: 18px; }
+        .page { display: none; }
+        .page.active { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .balance-card { background: linear-gradient(135deg, #151515 0%, #050505 100%); border: 1px solid #222; padding: 25px; border-radius: 20px; position: relative; overflow: hidden; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .balance-card h1 { margin: 8px 0; font-size: 2.4rem; color: var(--primary-green); font-weight: 800; letter-spacing: -1px; }
+        
+        .tap-area { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; position: relative; }
+        .tree-btn { font-size: 130px; cursor: pointer; transition: transform 0.1s; user-select: none; filter: drop-shadow(0 0 15px rgba(50,205,50,0.2)); }
+        .tree-btn:active { transform: scale(0.85); }
+        .floating-point { position: absolute; color: var(--primary-green); font-weight: bold; animation: floatUp 0.7s ease-out forwards; pointer-events: none; }
+        @keyframes floatUp { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-120px); } }
+
+        .task-grid { display: grid; gap: 12px; margin-top: 15px; }
+        .task-card { background: var(--card-bg); padding: 16px; border-radius: 16px; border: 1px solid #1e1e1e; display: flex; justify-content: space-between; align-items: center; }
+        .task-icon { width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+        
+        .btn-action { background: var(--primary-green); color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; }
+        .bottom-navbar { position: fixed; bottom: 0; width: 100%; background: #000; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #1a1a1a; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        .nav-link { text-align: center; font-size: 0.7rem; color: #444; text-decoration: none; flex: 1; transition: 0.3s; }
+        .nav-link i { font-size: 1.3rem; display: block; margin-bottom: 5px; }
+        .nav-link.active { color: var(--primary-green); }
+
+        .input-box { width: 100%; padding: 15px; background: #151515; border: 1px solid #222; border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+        .btn-main { width: 100%; background: var(--primary-green); color: black; border: none; padding: 16px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen"><div class="loader"></div><p style="margin-top: 15px; color: var(--primary-green); font-size: 0.8rem; letter-spacing: 2px;">SECURE ACCESS</p></div>
+
+    <div id="auth-section">
+        <div id="signup-page" class="auth-container">
+            <h2 style="text-align: center;">Join <span>tree's</span></h2>
+            <input type="text" id="reg-name" class="input-box" placeholder="Your Name">
+            <input type="email" id="reg-email" class="input-box" placeholder="Email Address">
+            <input type="number" id="reg-phone" class="input-box" placeholder="Phone Number">
+            <input type="password" id="reg-pass" class="input-box" placeholder="Password">
+            <input type="text" id="reg-ref" class="input-box" placeholder="Refer Code (Optional)">
+            <button class="btn-main" onclick="handleSignup()">Create Account</button>
+            <p style="text-align: center; color: var(--text-gray);" onclick="toggleAuth('login')">Already have an account? Login</p>
+        </div>
+        <div id="login-page" class="auth-container">
+            <h2 style="text-align: center;">Welcome to <span>tree's</span></h2>
+            <input type="email" id="login-email" class="input-box" placeholder="Email Address">
+            <input type="password" id="login-pass" class="input-box" placeholder="Password">
+            <button class="btn-main" onclick="handleLogin()">Login Account</button>
+            <p style="text-align: center; color: var(--text-gray);" onclick="toggleAuth('signup')">New here? Sign Up</p>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <header>
+            <div class="brand-name"><span>tree's</span></div>
+            <div style="color: var(--text-gray); font-size: 1.2rem; cursor: pointer;" onclick="window.open('https://t.me/boshir_earning', '_blank')"><i class="fab fa-telegram"></i></div>
+        </header>
+        
+        <div class="container">
+            <div id="home" class="page active">
+                <div class="balance-card">
+                    <small style="color:var(--text-gray); font-weight: 600; text-transform: uppercase;">Current Balance</small>
+                    <h1 id="user-coins">0.000 Coins</h1>
+                    <div style="display:flex; gap:10px; margin-top:15px;">
+                        <button class="btn-action" onclick="navigateTo('wallet')">Withdraw</button>
+                        <button class="btn-action" style="background:transparent; border:1px solid #333; color:white;" onclick="navigateTo('refer')">Refer</button>
+                    </div>
+                </div>
+
+                <h4 style="margin-bottom: 15px;">Daily Tasks <span id="tasks-left" style="float:right; color:var(--primary-green); font-size:0.8rem;">15 Left</span></h4>
+                
+                <div class="task-grid">
+                    <div class="task-card" style="border: 1px solid var(--primary-green);">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div class="task-icon" style="background: rgba(50, 205, 50, 0.1); color: var(--primary-green);"><i class="fas fa-user-plus"></i></div>
+                            <div><b>Refer & Earn</b><br><small style="color:gray;">Invite Your Friend and earn Money easy from hare</small></div>
+                        </div>
+                        <button class="btn-action" onclick="shareReferral()">Invite</button>
+                    </div>
+
+                    <div class="task-card">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div class="task-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;"><i class="fas fa-gift"></i></div>
+                            <div><b>Daily Bonus</b><br><small style="color:gray;">Claim 50 Coins</small></div>
+                        </div>
+                        <button class="btn-action" style="background:#a855f7; color:white;" onclick="claimDailyBonus()">Claim</button>
+                    </div>
+
+                    <div class="task-card">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <div class="task-icon" style="background: rgba(255, 94, 0, 0.1); color: #ff5e00;"><i class="fas fa-play-circle"></i></div>
+                            <div><b>Watch Video</b><br><small style="color:gray;">Earn 20 Coins</small></div>
+                        </div>
+                        <button class="btn-action" onclick="startTask('Ad')">Watch</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tap" class="page">
+                <div class="balance-card" style="text-align:center; padding: 15px;">
+                    <small>TAP EARNINGS</small>
+                    <h2 class="wallet-coins" style="color:var(--primary-green); margin:5px 0;">0.000</h2>
+                </div>
+                <div class="tap-area">
+                    <div class="tree-btn" onclick="handleTap(event)">🌴</div>
+                    <p style="margin-top:20px; color:var(--text-gray);">Tap the tree to earn 0.002 coins</p>
+                </div>
+            </div>
+
+            <div id="wallet" class="page">
+                <h3 style="text-align:center;">Wallet Status</h3>
+                <div class="balance-card" style="text-align:center;">
+                    <small>AVAILABLE TO WITHDRAW</small>
+                    <h1 class="wallet-coins">0.000 Coins</h1>
+                </div>
+                <div id="withdrawal-locked" style="text-align:center; padding:20px; color:#ff5555; background:rgba(255,0,0,0.05); border-radius:15px;">
+                    <i class="fas fa-lock"></i> Minimum: 5000 Coins.
+                </div>
+                <div id="withdrawal-form" style="display:none;">
+                    <input type="number" id="w-amount" class="input-box" placeholder="Amount (Min 5000)">
+                    <select id="w-method" class="input-box"><option>Bkash</option><option>Nagad</option></select>
+                    <input type="text" id="w-number" class="input-box" placeholder="Your Number">
+                    <button class="btn-main" onclick="requestWithdraw()">Confirm Withdrawal</button>
+                </div>
+            </div>
+
+            <div id="refer" class="page">
+                <h3 style="text-align:center;">Refer & Earn</h3>
+                <div class="balance-card" style="text-align:center;">
+                    <p>Your Referral Code</p>
+                    <h1 id="ref-code-display" style="letter-spacing:5px;">-</h1>
+                    <button class="btn-main" onclick="copyRef()">Copy Code</button>
+                </div>
+            </div>
+
+            <div id="profile" class="page">
+                <div style="text-align:center; padding:30px 0;">
+                    <div style="width:70px; height:70px; background:var(--primary-green); border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:black; font-size:1.5rem; font-weight:bold;" id="user-initial">T</div>
+                    <h3 id="prof-name">User</h3>
+                    <p id="prof-email" style="color:gray;"></p>
+                </div>
+                <div style="background:#111; padding:20px; border-radius:15px;">
+                    <p>Powered by: tree's Team</p>
+                    <button class="btn-main" style="background:#ff4444; color:white;" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-navbar">
+            <a href="#" class="nav-link active" onclick="navigateTo('home', this)"><i class="fas fa-home"></i>Home</a>
+            <a href="#" class="nav-link" onclick="navigateTo('tap', this)"><i class="fas fa-tree"></i>Tap</a>
+            <a href="#" class="nav-link" onclick="navigateTo('wallet', this)"><i class="fas fa-wallet"></i>Wallet</a>
+            <a href="#" class="nav-link" onclick="navigateTo('refer', this)"><i class="fas fa-share-nodes"></i>Refer</a>
+            <a href="#" class="nav-link" onclick="navigateTo('profile', this)"><i class="fas fa-user-circle"></i>Profile</a>
+        </nav>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+          apiKey: "AIzaSyC1eNeuHbJbBCGxkMnpPEGJqNgtqFzTFuw",
+          authDomain: "earnings-by-boshir.firebaseapp.com",
+          databaseURL: "https://earnings-by-boshir-default-rtdb.firebaseio.com",
+          projectId: "earnings-by-boshir",
+          storageBucket: "earnings-by-boshir.firebasestorage.app",
+          messagingSenderId: "376974811547",
+          appId: "1:376974811547:web:13d7b928108c59b068013e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const MONETAG_LINK = "https://otieu.com/4/10517163";
+        const APP_LINK = "https://your-app-link.com"; 
+        let currentUser = null;
+
+        window.onload = () => {
+            const savedEmail = localStorage.getItem('loggedUserEmail');
+            if(savedEmail) loadFirebaseData(savedEmail.replace(/\./g, '_'));
+            else { document.getElementById('loading-screen').style.display='none'; toggleAuth('login'); }
+        };
+
+        function loadFirebaseData(key) {
+            db.ref('users/' + key).on('value', s => {
+                currentUser = s.val();
+                if(!currentUser) return;
+                document.getElementById('loading-screen').style.display='none';
+                document.getElementById('auth-section').style.display='none';
+                document.getElementById('main-app').style.display='block';
+                updateUI();
+            });
+        }
+
+        function updateUI() {
+            const coins = parseFloat(currentUser.coins || 0).toFixed(3);
+            document.getElementById('user-coins').innerText = coins + " Coins";
+            document.querySelectorAll('.wallet-coins').forEach(el => el.innerText = coins + " Coins");
+            document.getElementById('tasks-left').innerText = (currentUser.tasks || 0) + " Left";
+            document.getElementById('prof-name').innerText = currentUser.name;
+            document.getElementById('prof-email').innerText = currentUser.email;
+            document.getElementById('ref-code-display').innerText = currentUser.refCode;
+            
+            if(currentUser.coins >= 5000) {
+                document.getElementById('withdrawal-locked').style.display = 'none';
+                document.getElementById('withdrawal-form').style.display = 'block';
+            }
+        }
+
+        function shareReferral() {
+            if(!currentUser) return;
+            const text = `Invite Your Friend and earn Money easy from hare. \n\nApp Link: ${APP_LINK} \nMy Referral Code: ${currentUser.refCode}`;
+            if(navigator.share) {
+                navigator.share({ title: "tree's", text: text }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(text);
+                alert("Referral Link & Code Copied!");
+            }
+        }
+
+        function handleTap(e) {
+            if(!currentUser) return;
+            const float = document.createElement('div');
+            float.className = 'floating-point';
+            float.innerText = '+0.002';
+            float.style.left = e.clientX + 'px';
+            float.style.top = e.clientY + 'px';
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 700);
+
+            const key = currentUser.email.replace(/\./g, '_');
+            const currentCoins = parseFloat(currentUser.coins || 0);
+            db.ref('users/' + key).update({ coins: (currentCoins + 0.002).toFixed(4) });
+        }
+
+        function navigateTo(pageId, element) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if(element) {
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                element.classList.add('active');
+            }
+        }
+
+        function claimDailyBonus() {
+            const today = new Date().toDateString();
+            if(currentUser.lastBonus === today) return alert("Already claimed today!");
+            const key = currentUser.email.replace(/\./g, '_');
+            db.ref('users/' + key).update({ 
+                coins: (parseFloat(currentUser.coins) + 50).toFixed(3), 
+                lastBonus: today 
+            });
+            alert("50 Coins Bonus Received!");
+        }
+
+        function startTask() {
+            if(currentUser.tasks <= 0) return alert("No tasks left!");
+            const key = currentUser.email.replace(/\./g, '_');
+            db.ref('users/' + key).update({ 
+                tasks: currentUser.tasks - 1,
+                coins: (parseFloat(currentUser.coins) + 20).toFixed(3)
+            });
+            window.open(MONETAG_LINK, '_blank');
+        }
+
+        function toggleAuth(type) {
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('login-page').style.display = type === 'login' ? 'flex' : 'none';
+            document.getElementById('signup-page').style.display = type === 'signup' ? 'flex' : 'none';
+        }
+
+        function handleSignup() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const phone = document.getElementById('reg-phone').value;
+            const pass = document.getElementById('reg-pass').value;
+            if(!name || !email || !pass) return alert("Fill all fields!");
+            const key = email.replace(/\./g, '_');
+            const refCode = 'TREE' + Math.floor(1000 + Math.random() * 9000);
+            db.ref('users/' + key).set({ 
+                name, email, phone, pass, coins: 0, tasks: 15, 
+                refCode, referCount: 0, lastBonus: "" 
+            }).then(() => { alert("Account Created!"); toggleAuth('login'); });
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const key = email.replace(/\./g, '_');
+            db.ref('users/' + key).once('value', s => {
+                const u = s.val();
+                if(u && u.pass === pass) { 
+                    localStorage.setItem('loggedUserEmail', email); 
+                    loadFirebaseData(key); 
+                } else alert("Wrong Password!");
+            });
+        }
+
+        function requestWithdraw() {
+            const amount = document.getElementById('w-amount').value;
+            const method = document.getElementById('w-method').value;
+            const number = document.getElementById('w-number').value;
+            if(amount < 5000) return alert("Min 5000 Coins!");
+            if(!number) return alert("Enter Number!");
+            alert("Withdrawal Request Sent!");
+        }
+
+        function handleLogout() { localStorage.clear(); location.reload(); }
+        function copyRef() { navigator.clipboard.writeText(currentUser.refCode); alert("Copied!"); }
+    </script>
+</body>
+</html>
