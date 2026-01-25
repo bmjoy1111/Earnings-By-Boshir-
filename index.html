@@ -202,7 +202,7 @@
             const savedEmail = localStorage.getItem('loggedUserEmail');
             if(savedEmail) loadFirebaseData(savedEmail.replace(/\./g, '_'));
             else { hideLoading(); toggleAuth('login'); }
-            setTimeout(hideLoading, 5000); 
+            setTimeout(hideLoading, 4000); 
         };
 
         function hideLoading() { document.getElementById('loading-screen').style.display='none'; }
@@ -238,44 +238,74 @@
             }
         }
 
-        // Fixed Refer Code Copy
-        function copyRef() {
-            const code = currentUser.refCode;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(code).then(() => alert("Code Copied: " + code));
+        function startTask(zoneId) {
+            if(currentUser.tasks <= 0) return alert("No tasks left today!");
+            
+            const sdkName = 'show_' + zoneId;
+            const reward = (zoneId === '10518617') ? 50 : 20;
+
+            // যদি SDK লোড হয়ে থাকে তবে অ্যাড দেখাবে
+            if (typeof window[sdkName] === 'function') {
+                window[sdkName]().then(() => {
+                    // অ্যাড দেখার পর রিওয়ার্ড দেওয়া হবে
+                    const key = currentUser.email.replace(/\./g, '_');
+                    db.ref('users/' + key).update({ 
+                        tasks: currentUser.tasks - 1,
+                        coins: (parseFloat(currentUser.coins) + reward).toFixed(3)
+                    }).then(() => {
+                        alert(`Congrats! You earned ${reward} coins.`);
+                    });
+                }).catch(err => {
+                    alert("Ad failed to load. Please try again later.");
+                });
             } else {
-                const tempInput = document.createElement("input");
-                tempInput.value = code;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempInput);
-                alert("Code Copied: " + code);
+                // সচরাচর লিংকের জন্য ফলব্যাক
+                window.open('https://otieu.com/4/' + zoneId, '_blank');
+                alert("Please wait for the page to load to receive coins.");
             }
         }
 
-        function shareReferral() {
-            if(!currentUser) return;
-            const message = `Join thin app and earnings money easy 💰\n\nRefer Code: ${currentUser.refCode}\nApp Link: ${APP_LINK}`;
-            if(navigator.share) {
-                navigator.share({ title: "tree's Premium", text: message }).catch(console.error);
-            } else {
-                copyRef();
-                alert("Message ready! Code copied to clipboard.");
-            }
+        // --- Auth & Other Logic (Keep as is) ---
+        function toggleAuth(type) {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('login-page').style.display = type === 'login' ? 'flex' : 'none';
+            document.getElementById('signup-page').style.display = type === 'signup' ? 'flex' : 'none';
         }
 
-        function handleTap(e) {
-            if(!currentUser) return;
-            const float = document.createElement('div');
-            float.className = 'floating-point';
-            float.innerText = '+0.002';
-            float.style.left = e.clientX + 'px'; float.style.top = e.clientY + 'px';
-            document.body.appendChild(float);
-            setTimeout(() => float.remove(), 700);
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return alert("Fill all fields!");
+            const key = email.replace(/\./g, '_');
+            db.ref('users/' + key).once('value', s => {
+                const data = s.val();
+                if(data && data.pass === pass) {
+                    localStorage.setItem('loggedUserEmail', email);
+                    loadFirebaseData(key);
+                } else alert("Invalid Credentials!");
+            });
+        }
 
-            const key = currentUser.email.replace(/\./g, '_');
-            db.ref('users/' + key).update({ coins: (parseFloat(currentUser.coins) + 0.002).toFixed(4) });
+        async function handleSignup() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            if(!name || !email || !pass) return alert("Fill all fields!");
+            const key = email.replace(/\./g, '_');
+            const refCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            db.ref('users/' + key).set({
+                name, email, pass, refCode, coins: 0, tasks: 15, referCount: 0
+            }).then(() => {
+                localStorage.setItem('loggedUserEmail', email);
+                loadFirebaseData(key);
+            });
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            location.reload();
         }
 
         function navigateTo(pageId, element) {
@@ -287,94 +317,17 @@
             }
         }
 
-        function startTask(zoneId) {
-            if(currentUser.tasks <= 0) return alert("No tasks left!");
+        function handleTap(e) {
+            if(!currentUser) return;
+            const float = document.createElement('div');
+            float.className = 'floating-point';
+            float.innerText = '+0.002';
+            float.style.left = e.clientX + 'px'; float.style.top = e.clientY + 'px';
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 700);
             const key = currentUser.email.replace(/\./g, '_');
-            const reward = zoneId === '10518617' ? 50 : 20;
-            db.ref('users/' + key).update({ 
-                tasks: currentUser.tasks - 1,
-                coins: (parseFloat(currentUser.coins) + reward).toFixed(3)
-            });
-            window.open('https://otieu.com/4/' + zoneId, '_blank');
+            db.ref('users/' + key).update({ coins: (parseFloat(currentUser.coins) + 0.002).toFixed(4) });
         }
-
-        function toggleAuth(type) {
-            document.getElementById('main-app').style.display = 'none';
-            document.getElementById('auth-section').style.display = 'block';
-            document.getElementById('login-page').style.display = type === 'login' ? 'flex' : 'none';
-            document.getElementById('signup-page').style.display = type === 'signup' ? 'flex' : 'none';
-        }
-
-        // Updated Signup with Referral Bonus Logic
-        async function handleSignup() {
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const phone = document.getElementById('reg-phone').value;
-            const pass = document.getElementById('reg-pass').value;
-            const refUsed = document.getElementById('reg-ref').value.trim();
-
-            if(!name || !email || !pass) return alert("Fill all fields!");
-            
-            const key = email.replace(/\./g, '_');
-            let initialCoins = 0;
-
-            // Check if refer code is valid
-            if(refUsed) {
-                const usersRef = db.ref('users');
-                const snapshot = await usersRef.once('value');
-                let referOwnerKey = null;
-
-                snapshot.forEach(child => {
-                    if(child.val().refCode === refUsed) referOwnerKey = child.key;
-                });
-
-                if(referOwnerKey) {
-                    initialCoins = 200; // New user gets 200 coins
-                    // Increment refer count for owner
-                    const ownerData = snapshot.child(referOwnerKey).val();
-                    db.ref('users/' + referOwnerKey).update({ 
-                        referCount: (ownerData.referCount || 0) + 1 
-                    });
-                } else {
-                    alert("Invalid Refer Code! No bonus will be added.");
-                }
-            }
-
-            const refCode = 'TREE' + Math.floor(1000 + Math.random() * 9000);
-            db.ref('users/' + key).set({ 
-                name, email, phone, pass, coins: initialCoins, tasks: 15, 
-                refCode, referCount: 0, lastBonus: "" 
-            }).then(() => { 
-                alert(initialCoins > 0 ? "Account Created! You got 200 coins bonus." : "Account Created!");
-                toggleAuth('login'); 
-            });
-        }
-
-        function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
-            const key = email.replace(/\./g, '_');
-            db.ref('users/' + key).once('value', s => {
-                const u = s.val();
-                if(u && u.pass === pass) { 
-                    localStorage.setItem('loggedUserEmail', email); 
-                    loadFirebaseData(key); 
-                } else alert("Invalid credentials!");
-            });
-        }
-
-        function claimDailyBonus() {
-            const today = new Date().toDateString();
-            if(currentUser.lastBonus === today) return alert("Already claimed today!");
-            const key = currentUser.email.replace(/\./g, '_');
-            db.ref('users/' + key).update({ 
-                coins: (parseFloat(currentUser.coins) + 50).toFixed(3), lastBonus: today 
-            });
-            alert("50 Coins Bonus Received!");
-        }
-
-        function handleLogout() { localStorage.clear(); location.reload(); }
-        function requestWithdraw() { alert("Request Sent!"); }
     </script>
 </body>
 </html>
