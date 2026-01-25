@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src='//libtl.com/sdk.js' data-zone='10516961' data-sdk='show_10516961'></script>
+    <script src='//libtl.com/sdk.js' data-zone='10518617' data-sdk='show_10518617'></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -56,14 +57,14 @@
 
     <div id="loading-screen"><div class="loader"></div><p style="margin-top: 15px; color: var(--primary-green); font-size: 0.8rem; letter-spacing: 2px;">SECURE ACCESS</p></div>
 
-    <div id="auth-section">
+    <div id="auth-section" style="display:none;">
         <div id="signup-page" class="auth-container">
             <h2 style="text-align: center;">Join <span>tree's</span></h2>
             <input type="text" id="reg-name" class="input-box" placeholder="Your Name">
             <input type="email" id="reg-email" class="input-box" placeholder="Email Address">
             <input type="number" id="reg-phone" class="input-box" placeholder="Phone Number">
             <input type="password" id="reg-pass" class="input-box" placeholder="Password">
-            <input type="text" id="reg-ref" class="input-box" placeholder="Refer Code (Optional)">
+            <input type="text" id="reg-ref" class="input-box" placeholder="Refer Code (Optional - 200 Coins)">
             <button class="btn-main" onclick="handleSignup()">Create Account</button>
             <p style="text-align: center; color: var(--text-gray);" onclick="toggleAuth('login')">Already have an account? Login</p>
         </div>
@@ -79,7 +80,7 @@
     <div id="main-app">
         <header>
             <div class="brand-name"><span>tree's</span></div>
-            <div style="color: var(--text-gray); font-size: 1.2rem; cursor: pointer;" onclick="window.open('https://t.me/boshir_earning', '_blank')"><i class="fab fa-telegram"></i></div>
+            <div style="color: var(--text-gray); font-size: 1.2rem; cursor: pointer;" onclick="window.open('https://t.me/freeerningbyboshir', '_blank')"><i class="fab fa-telegram"></i></div>
         </header>
         
         <div class="container">
@@ -99,17 +100,17 @@
                     <div class="task-card" style="border: 1px solid var(--primary-green);">
                         <div style="display:flex; align-items:center; gap:15px;">
                             <div class="task-icon" style="background: rgba(50, 205, 50, 0.1); color: var(--primary-green);"><i class="fas fa-user-plus"></i></div>
-                            <div><b>Refer & Earn Money 💰</b><br><small style="color:gray;">Share with friends and earn together</small></div>
+                            <div><b>Refer & Earn Money 💰</b><br><small style="color:gray;">Share & get 200 coins bonus</small></div>
                         </div>
                         <button class="btn-action" onclick="shareReferral()">Invite</button>
                     </div>
 
                     <div class="task-card">
                         <div style="display:flex; align-items:center; gap:15px;">
-                            <div class="task-icon" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;"><i class="fas fa-gift"></i></div>
-                            <div><b>Daily Bonus</b><br><small style="color:gray;">Claim 50 Coins</small></div>
+                            <div class="task-icon" style="background: rgba(0, 136, 204, 0.1); color: #0088cc;"><i class="fas fa-bolt"></i></div>
+                            <div><b>Special Task</b><br><small style="color:gray;">Earn 50 Coins Fast</small></div>
                         </div>
-                        <button class="btn-action" style="background:#a855f7; color:white;" onclick="claimDailyBonus()">Claim</button>
+                        <button class="btn-action" style="background:#0088cc; color:white;" onclick="startTask('10518617')">Start</button>
                     </div>
 
                     <div class="task-card">
@@ -117,7 +118,7 @@
                             <div class="task-icon" style="background: rgba(255, 94, 0, 0.1); color: #ff5e00;"><i class="fas fa-play-circle"></i></div>
                             <div><b>Watch Video</b><br><small style="color:gray;">Earn 20 Coins</small></div>
                         </div>
-                        <button class="btn-action" onclick="startTask('Ad')">Watch</button>
+                        <button class="btn-action" onclick="startTask('10516961')">Watch</button>
                     </div>
                 </div>
             </div>
@@ -154,7 +155,8 @@
                 <h3 style="text-align:center;">Refer & Earn</h3>
                 <div class="balance-card" style="text-align:center;">
                     <p>Your Referral Code</p>
-                    <h1 id="ref-code-display" style="letter-spacing:5px;">-</h1>
+                    <h1 id="ref-code-display" style="letter-spacing:5px; color:var(--primary-green);">-</h1>
+                    <p style="color:var(--text-gray); font-size:0.9rem;">Total Refers: <span id="ref-count-display" style="color:white; font-weight:bold;">0</span></p>
                     <button class="btn-main" onclick="copyRef()">Copy Code</button>
                 </div>
             </div>
@@ -193,31 +195,33 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const MONETAG_LINK = "https://otieu.com/4/10517163";
-        
-        // আপনার দেওয়া সঠিক লিঙ্কটি এখানে বসানো হয়েছে
         const APP_LINK = "https://trees-bay.vercel.app/"; 
-        
         let currentUser = null;
 
         window.onload = () => {
             const savedEmail = localStorage.getItem('loggedUserEmail');
             if(savedEmail) loadFirebaseData(savedEmail.replace(/\./g, '_'));
-            else { document.getElementById('loading-screen').style.display='none'; toggleAuth('login'); }
+            else { hideLoading(); toggleAuth('login'); }
+            setTimeout(hideLoading, 5000); 
         };
+
+        function hideLoading() { document.getElementById('loading-screen').style.display='none'; }
 
         function loadFirebaseData(key) {
             db.ref('users/' + key).on('value', s => {
-                currentUser = s.val();
-                if(!currentUser) return;
-                document.getElementById('loading-screen').style.display='none';
-                document.getElementById('auth-section').style.display='none';
-                document.getElementById('main-app').style.display='block';
-                updateUI();
+                const data = s.val();
+                if(data) {
+                    currentUser = data;
+                    hideLoading();
+                    document.getElementById('auth-section').style.display='none';
+                    document.getElementById('main-app').style.display='block';
+                    updateUI();
+                } else { hideLoading(); toggleAuth('login'); }
             });
         }
 
         function updateUI() {
+            if(!currentUser) return;
             const coins = parseFloat(currentUser.coins || 0).toFixed(3);
             document.getElementById('user-coins').innerText = coins + " Coins";
             document.querySelectorAll('.wallet-coins').forEach(el => el.innerText = coins + " Coins");
@@ -225,6 +229,8 @@
             document.getElementById('prof-name').innerText = currentUser.name;
             document.getElementById('prof-email').innerText = currentUser.email;
             document.getElementById('ref-code-display').innerText = currentUser.refCode;
+            document.getElementById('ref-count-display').innerText = currentUser.referCount || 0;
+            document.getElementById('user-initial').innerText = currentUser.name.charAt(0).toUpperCase();
             
             if(currentUser.coins >= 5000) {
                 document.getElementById('withdrawal-locked').style.display = 'none';
@@ -232,19 +238,30 @@
             }
         }
 
-        // আপনার নির্দিষ্ট মেসেজসহ রেফারেল শেয়ার লজিক
+        // Fixed Refer Code Copy
+        function copyRef() {
+            const code = currentUser.refCode;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => alert("Code Copied: " + code));
+            } else {
+                const tempInput = document.createElement("input");
+                tempInput.value = code;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                alert("Code Copied: " + code);
+            }
+        }
+
         function shareReferral() {
             if(!currentUser) return;
             const message = `Join thin app and earnings money easy 💰\n\nRefer Code: ${currentUser.refCode}\nApp Link: ${APP_LINK}`;
-            
             if(navigator.share) {
-                navigator.share({
-                    title: "tree's Premium",
-                    text: message
-                }).catch(console.error);
+                navigator.share({ title: "tree's Premium", text: message }).catch(console.error);
             } else {
-                navigator.clipboard.writeText(message);
-                alert("Referral Message & Link Copied!");
+                copyRef();
+                alert("Message ready! Code copied to clipboard.");
             }
         }
 
@@ -253,14 +270,12 @@
             const float = document.createElement('div');
             float.className = 'floating-point';
             float.innerText = '+0.002';
-            float.style.left = e.clientX + 'px';
-            float.style.top = e.clientY + 'px';
+            float.style.left = e.clientX + 'px'; float.style.top = e.clientY + 'px';
             document.body.appendChild(float);
             setTimeout(() => float.remove(), 700);
 
             const key = currentUser.email.replace(/\./g, '_');
-            const currentCoins = parseFloat(currentUser.coins || 0);
-            db.ref('users/' + key).update({ coins: (currentCoins + 0.002).toFixed(4) });
+            db.ref('users/' + key).update({ coins: (parseFloat(currentUser.coins) + 0.002).toFixed(4) });
         }
 
         function navigateTo(pageId, element) {
@@ -272,45 +287,67 @@
             }
         }
 
-        function claimDailyBonus() {
-            const today = new Date().toDateString();
-            if(currentUser.lastBonus === today) return alert("Already claimed today!");
-            const key = currentUser.email.replace(/\./g, '_');
-            db.ref('users/' + key).update({ 
-                coins: (parseFloat(currentUser.coins) + 50).toFixed(3), 
-                lastBonus: today 
-            });
-            alert("50 Coins Bonus Received!");
-        }
-
-        function startTask() {
+        function startTask(zoneId) {
             if(currentUser.tasks <= 0) return alert("No tasks left!");
             const key = currentUser.email.replace(/\./g, '_');
+            const reward = zoneId === '10518617' ? 50 : 20;
             db.ref('users/' + key).update({ 
                 tasks: currentUser.tasks - 1,
-                coins: (parseFloat(currentUser.coins) + 20).toFixed(3)
+                coins: (parseFloat(currentUser.coins) + reward).toFixed(3)
             });
-            window.open(MONETAG_LINK, '_blank');
+            window.open('https://otieu.com/4/' + zoneId, '_blank');
         }
 
         function toggleAuth(type) {
+            document.getElementById('main-app').style.display = 'none';
             document.getElementById('auth-section').style.display = 'block';
             document.getElementById('login-page').style.display = type === 'login' ? 'flex' : 'none';
             document.getElementById('signup-page').style.display = type === 'signup' ? 'flex' : 'none';
         }
 
-        function handleSignup() {
+        // Updated Signup with Referral Bonus Logic
+        async function handleSignup() {
             const name = document.getElementById('reg-name').value;
             const email = document.getElementById('reg-email').value;
             const phone = document.getElementById('reg-phone').value;
             const pass = document.getElementById('reg-pass').value;
+            const refUsed = document.getElementById('reg-ref').value.trim();
+
             if(!name || !email || !pass) return alert("Fill all fields!");
+            
             const key = email.replace(/\./g, '_');
+            let initialCoins = 0;
+
+            // Check if refer code is valid
+            if(refUsed) {
+                const usersRef = db.ref('users');
+                const snapshot = await usersRef.once('value');
+                let referOwnerKey = null;
+
+                snapshot.forEach(child => {
+                    if(child.val().refCode === refUsed) referOwnerKey = child.key;
+                });
+
+                if(referOwnerKey) {
+                    initialCoins = 200; // New user gets 200 coins
+                    // Increment refer count for owner
+                    const ownerData = snapshot.child(referOwnerKey).val();
+                    db.ref('users/' + referOwnerKey).update({ 
+                        referCount: (ownerData.referCount || 0) + 1 
+                    });
+                } else {
+                    alert("Invalid Refer Code! No bonus will be added.");
+                }
+            }
+
             const refCode = 'TREE' + Math.floor(1000 + Math.random() * 9000);
             db.ref('users/' + key).set({ 
-                name, email, phone, pass, coins: 0, tasks: 15, 
+                name, email, phone, pass, coins: initialCoins, tasks: 15, 
                 refCode, referCount: 0, lastBonus: "" 
-            }).then(() => { alert("Account Created!"); toggleAuth('login'); });
+            }).then(() => { 
+                alert(initialCoins > 0 ? "Account Created! You got 200 coins bonus." : "Account Created!");
+                toggleAuth('login'); 
+            });
         }
 
         function handleLogin() {
@@ -322,16 +359,22 @@
                 if(u && u.pass === pass) { 
                     localStorage.setItem('loggedUserEmail', email); 
                     loadFirebaseData(key); 
-                } else alert("Wrong Password!");
+                } else alert("Invalid credentials!");
             });
         }
 
-        function requestWithdraw() {
-            const amount = document.getElementById('w-amount').value;
-            const number = document.getElementById('w-number').value;
-            if(amount < 5000) return alert("Min 5000 Coins!");
-            if(!number) return alert("Enter Number!");
-            alert("Withdrawal Request Sent!");
+        function claimDailyBonus() {
+            const today = new Date().toDateString();
+            if(currentUser.lastBonus === today) return alert("Already claimed today!");
+            const key = currentUser.email.replace(/\./g, '_');
+            db.ref('users/' + key).update({ 
+                coins: (parseFloat(currentUser.coins) + 50).toFixed(3), lastBonus: today 
+            });
+            alert("50 Coins Bonus Received!");
         }
 
-        function handleLogout(
+        function handleLogout() { localStorage.clear(); location.reload(); }
+        function requestWithdraw() { alert("Request Sent!"); }
+    </script>
+</body>
+</html>
