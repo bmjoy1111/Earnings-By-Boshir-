@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earnings By Boshir</title>
+    <script src='//libtl.com/sdk.js' data-zone='10516961' data-sdk='show_10516961'></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-green: #32cd32; 
+            --bg-dark: #0c0c0c;
+            --card-bg: #1a1a1a;
+            --text-gray: #b3b3b3;
+            --accent-blue: #2962ff;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-dark);
+            color: white;
+            user-select: none;
+        }
+
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .loader {
+            border: 5px solid #333; border-top: 5px solid var(--primary-green);
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .auth-container {
+            padding: 30px; display: none; height: 100vh;
+            flex-direction: column; justify-content: center;
+        }
+
+        #main-app { display: none; padding-bottom: 80px; }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 20px; background: #000; border-bottom: 1px solid #222;
+        }
+
+        .brand-name { font-size: 1.3rem; font-weight: bold; color: white; }
+        .header-icons i { margin-left: 18px; font-size: 1.2rem; color: var(--text-gray); }
+
+        .container { padding: 15px; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .balance-card {
+            background: var(--card-bg); border-left: 5px solid var(--primary-green);
+            padding: 22px; border-radius: 15px; display: flex;
+            justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+
+        .balance-card h1 { margin: 5px 0; font-size: 2rem; color: var(--primary-green); }
+
+        .task-item {
+            background: var(--card-bg); padding: 18px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; border-left: 4px solid transparent;
+        }
+
+        .input-box {
+            width: 100%; padding: 14px; background: #222; border: 1px solid #333;
+            border-radius: 8px; color: white; margin-bottom: 15px; box-sizing: border-box;
+        }
+
+        .btn-main {
+            width: 100%; background: var(--primary-green); color: white;
+            border: none; padding: 16px; border-radius: 10px;
+            font-weight: bold; font-size: 1rem; cursor: pointer;
+        }
+
+        .security-box {
+            background: #151515; padding: 20px; border-radius: 12px;
+            text-align: center; margin-top: 15px; border: 1px solid #222;
+        }
+
+        .bottom-navbar {
+            position: fixed; bottom: 0; width: 100%; background: #000;
+            display: flex; justify-content: space-around; padding: 12px 0;
+            border-top: 1px solid #1a1a1a;
+        }
+
+        .nav-link { text-align: center; font-size: 0.75rem; color: #666; text-decoration: none; flex: 1; }
+        .nav-link.active { color: var(--primary-green); }
+        .nav-link i { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+
+        .admin-link {
+            display: flex; align-items: center; gap: 15px;
+            background: #222; padding: 15px; border-radius: 10px;
+            margin-bottom: 10px; text-decoration: none; color: white;
+        }
+
+        .lock-msg {
+            background: #2a1111; color: #ff5555; padding: 15px;
+            border-radius: 10px; text-align: center; border: 1px solid #552222;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <p style="margin-top: 20px; color: var(--primary-green);">Loading Earnings By Boshir...</p>
+    </div>
+
+    <div id="auth-section">
+        <div id="signup-page" class="auth-container">
+            <h2 style="color: var(--primary-green); text-align: center;">Create Account</h2>
+            <input type="text" id="reg-name" class="input-box" placeholder="Full Name">
+            <input type="email" id="reg-email" class="input-box" placeholder="Email Address">
+            <input type="password" id="reg-pass" class="input-box" placeholder="Create Password">
+            <input type="text" id="reg-ref" class="input-box" placeholder="Refer Code (Optional)">
+            <button class="btn-main" onclick="handleSignup()">Sign Up</button>
+            <p style="text-align: center; margin-top: 15px; color: gray;">Already have an account? <span style="color:var(--primary-green); cursor:pointer;" onclick="toggleAuth('login')">Login</span></p>
+        </div>
+
+        <div id="login-page" class="auth-container">
+            <h2 style="color: var(--primary-green); text-align: center;">Welcome from Boshir Molla</h2>
+            <input type="email" id="login-email" class="input-box" placeholder="Email Address">
+            <input type="password" id="login-pass" class="input-box" placeholder="Password">
+            <button class="btn-main" onclick="handleLogin()">Login</button>
+            <p style="text-align: center; margin-top: 15px; color: gray;">Don't have an account? <span style="color:var(--primary-green); cursor:pointer;" onclick="toggleAuth('signup')">Sign Up</span></p>
+        </div>
+    </div>
+
+    <div id="main-app">
+        <header>
+            <div class="brand-name">Earnings By Boshir</div>
+            <div class="header-icons">
+                <i class="fas fa-bell"></i>
+                <i class="fas fa-user-circle"></i>
+            </div>
+        </header>
+
+        <div class="container">
+            <div id="home" class="page active">
+                <div class="balance-card">
+                    <div>
+                        <small style="color:var(--text-gray)">Your Balance</small>
+                        <h1 id="user-coins">0 Coins</h1>
+                    </div>
+                    <button class="btn-main" style="width: auto; padding: 10px 15px; background: white; color: black;" onclick="navigateTo('wallet')">Withdraw</button>
+                </div>
+
+                <h3 class="task-section-title">Daily Tasks <span style="float:right; font-weight:normal; font-size:0.8rem; color:var(--text-gray)" id="tasks-left">Tasks Left: 15</span></h3>
+                
+                <div class="task-item" style="border-left-color: #ff5e00;">
+                    <div style="display:flex; align-items:center; gap:15px;"><i class="fas fa-video" style="color:#ff5e00; font-size: 1.5rem;"></i> Watch Ad</div>
+                    <button class="btn-main" style="width:80px; padding:8px;" onclick="startTask('Ad')">Claim</button>
+                </div>
+
+                <div class="task-item" id="tg-task" style="border-left-color: #0088cc;">
+                    <div style="display:flex; align-items:center; gap:15px;"><i class="fab fa-telegram" style="color:#0088cc; font-size: 1.5rem;"></i> Join Telegram</div>
+                    <button class="btn-main" id="tg-btn" style="width:80px; padding:8px; background:#0088cc;" onclick="joinTelegram()">Join</button>
+                </div>
+
+                <div class="task-item" style="border-left-color: var(--accent-blue);">
+                    <div style="display:flex; align-items:center; gap:15px;"><i class="fas fa-globe" style="color:var(--accent-blue); font-size: 1.5rem;"></i> Visit Website</div>
+                    <button class="btn-main" style="width:80px; padding:8px; background:var(--accent-blue);" onclick="startTask('Visit')">Visit</button>
+                </div>
+            </div>
+
+            <div id="wallet" class="page">
+                <h2 style="text-align:center">My Wallet</h2>
+                <div class="balance-card">
+                    <div><small>Available Balance:</small><h1 class="wallet-coins">0 Coins</h1></div>
+                </div>
+
+                <div id="withdrawal-locked" class="lock-msg">
+                    <i class="fas fa-lock"></i><br>
+                    Minimum withdrawal is <b>5000 Coins</b>.<br>
+                    You need <span id="coins-needed">5000</span> more coins to unlock.
+                </div>
+
+                <div id="withdrawal-form" style="display: none;">
+                    <input type="number" class="input-box" placeholder="Enter amount">
+                    <select class="input-box"><option>Bkash</option><option>Nagad</option><option>Rocket</option></select>
+                    <input type="text" class="input-box" placeholder="Your Account Number">
+                    <button class="btn-main">Request Withdrawal</button>
+                </div>
+            </div>
+
+            <div id="refer" class="page">
+                <h2 style="text-align:center">Refer & Earn</h2>
+                <div class="security-box" style="border: 2px dashed #444; padding: 30px 20px;">
+                    <p>Your Unique Referral Code</p>
+                    <h2 id="ref-code-display" style="color:var(--primary-green); letter-spacing: 4px; font-size: 2rem; margin: 10px 0;">-</h2>
+                    <p id="total-ref-count" style="color:var(--text-gray)">Total Refers: 0</p>
+                    <button class="btn-main" style="background:#222" onclick="alert('Referral link copied!')">Copy & Share</button>
+                </div>
+                <div class="security-box" style="margin-top: 15px;">
+                    <p style="font-size: 0.9rem;">Refer friends and get 100 Coins for each!</p>
+                </div>
+            </div>
+
+            <div id="profile" class="page">
+                <div class="profile-header" style="text-align: center; padding: 20px;">
+                    <i class="fas fa-user-circle" style="font-size: 4rem; color: var(--primary-green);"></i>
+                    <h3 id="prof-name">User Name</h3>
+                    <p id="prof-email" style="color:gray">email@example.com</p>
+                </div>
+                <button class="btn-main" style="margin-top:15px; background: #333;" onclick="navigateTo('admin-page')">Contact Developer</button>
+                <button class="btn-main" style="background:#d32f2f; margin-top:10px;" onclick="handleLogout()">Logout</button>
+            </div>
+
+            <div id="admin-page" class="page">
+                <h2 style="text-align:center">Admin Details</h2>
+                <div class="security-box">
+                    <h3>MD Boshir Molla</h3>
+                    <p style="color: var(--text-gray);">Official Developer</p>
+                    <a href="tel:+966595617786" class="admin-link"><i class="fas fa-phone"></i> +966595617786</a>
+                    <a href="https://wa.me/966595617786" class="admin-link"><i class="fab fa-whatsapp"></i> WhatsApp Me</a>
+                    <a href="https://www.facebook.com/search/top?q=MD%20Boshir%20Molla" class="admin-link"><i class="fab fa-facebook"></i> Facebook</a>
+                    <button class="btn-main" onclick="navigateTo('profile')">Back</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="bottom-navbar">
+            <a href="#" class="nav-link active" onclick="navigateTo('home', this)"><i class="fas fa-house"></i>Home</a>
+            <a href="#" class="nav-link" onclick="navigateTo('wallet', this)"><i class="fas fa-wallet"></i>Wallet</a>
+            <a href="#" class="nav-link" onclick="navigateTo('refer', this)"><i class="fas fa-users"></i>Refer</a>
+            <a href="#" class="nav-link" onclick="navigateTo('profile', this)"><i class="fas fa-user-gear"></i>Profile</a>
+        </nav>
+    </div>
+
+    <script>
+        const MONETAG_LINK = "https://otieu.com/4/10517163"; 
+        const TG_LINK = "https://t.me/freeerningbyboshir";
+        const MIN_WITHDRAW = 5000;
+        let currentUser = null;
+
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('loading-screen').style.display = 'none';
+                const session = localStorage.getItem('loggedUserEmail');
+                if (session) loadAppData(session);
+                else {
+                    document.getElementById('auth-section').style.display = 'block';
+                    document.getElementById('login-page').style.display = 'flex';
+                }
+            }, 2000);
+        };
+
+        function toggleAuth(type) {
+            document.getElementById('login-page').style.display = type === 'login' ? 'flex' : 'none';
+            document.getElementById('signup-page').style.display = type === 'signup' ? 'flex' : 'none';
+        }
+
+        function handleSignup() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            const refInput = document.getElementById('reg-ref').value.trim().toUpperCase();
+
+            if (!name || !email || !pass) return alert("Fill all fields!");
+
+            let users = JSON.parse(localStorage.getItem('boshir_users') || '[]');
+            if (users.find(u => u.email === email)) return alert("Already registered!");
+
+            let startCoins = 0;
+            if (refInput !== "") {
+                const referrer = users.find(u => u.refCode === refInput);
+                if (referrer) {
+                    referrer.coins += 100;
+                    startCoins = 0; 
+                    alert("Referral code accepted!");
+                }
+            }
+
+            const newUser = {
+                name, email, pass, coins: startCoins, tasks: 15, referCount: 0,
+                refCode: 'BOSHIR' + Math.floor(1000 + Math.random() * 9000),
+                tgJoined: false
+            };
+
+            users.push(newUser);
+            localStorage.setItem('boshir_users', JSON.stringify(users));
+            alert("Signup Successful!");
+            toggleAuth('login');
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            const users = JSON.parse(localStorage.getItem('boshir_users') || '[]');
+            const user = users.find(u => u.email === email && u.pass === pass);
+            if (user) {
+                localStorage.setItem('loggedUserEmail', email);
+                loadAppData(email);
+            } else alert("Wrong credentials!");
+        }
+
+        function loadAppData(email) {
+            const users = JSON.parse(localStorage.getItem('boshir_users') || '[]');
+            currentUser = users.find(u => u.email === email);
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('prof-name').innerText = currentUser.name;
+            document.getElementById('prof-email').innerText = currentUser.email;
+            document.getElementById('ref-code-display').innerText = currentUser.refCode;
+            
+            if(currentUser.tgJoined) {
+                document.getElementById('tg-btn').innerText = "Joined";
+                document.getElementById('tg-btn').disabled = true;
+                document.getElementById('tg-btn').style.background = "#444";
+            }
+            updateUI();
+        }
+
+        function navigateTo(pageId, element) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if(element) {
+                document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+                element.classList.add('active');
+            }
+            if(pageId === 'wallet') checkWithdrawalStatus();
+        }
+
+        function joinTelegram() {
+            if(currentUser.tgJoined) return;
+            window.open(TG_LINK, '_blank');
+            setTimeout(() => {
+                currentUser.coins += 100;
+                currentUser.tgJoined = true;
+                saveUserData();
+                updateUI();
+                document.getElementById('tg-btn').innerText = "Joined";
+                document.getElementById('tg-btn').disabled = true;
+                alert("100 Coins added for joining Telegram!");
+            }, 3000);
+        }
+
+        function startTask(type) {
+            if (currentUser.tasks <= 0) return alert("No tasks left!");
+            window.open(MONETAG_LINK, '_blank');
+            
+            let waitTime = type === 'Ad' ? 15000 : 5000;
+            let reward = type === 'Ad' ? 20 : 30;
+
+            alert(type + " loading... Please wait.");
+            
+            setTimeout(() => {
+                currentUser.coins += reward;
+                currentUser.tasks -= 1;
+                saveUserData();
+                updateUI();
+                alert(reward + " Coins Added!");
+            }, waitTime);
+        }
+
+        function checkWithdrawalStatus() {
+            const needed = MIN_WITHDRAW - currentUser.coins;
+            if(currentUser.coins >= MIN_WITHDRAW) {
+                document.getElementById('withdrawal-locked').style.display = 'none';
+                document.getElementById('withdrawal-form').style.display = 'block';
+            } else {
+                document.getElementById('withdrawal-locked').style.display = 'block';
+                document.getElementById('withdrawal-form').style.display = 'none';
+                document.getElementById('coins-needed').innerText = needed;
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('loggedUserEmail');
+            location.reload();
+        }
+
+        function saveUserData() {
+            let users = JSON.parse(localStorage.getItem('boshir_users'));
+            const index = users.findIndex(u => u.email === currentUser.email);
+            users[index] = currentUser;
+            localStorage.setItem('boshir_users', JSON.stringify(users));
+        }
+
+        function updateUI() {
+            document.getElementById('user-coins').innerText = currentUser.coins + " Coins";
+            document.querySelectorAll('.wallet-coins').forEach(el => el.innerText = currentUser.coins + " Coins");
+            document.getElementById('tasks-left').innerText = "Tasks Left: " + currentUser.tasks;
+        }
+    </script>
+</body>
+</html>
