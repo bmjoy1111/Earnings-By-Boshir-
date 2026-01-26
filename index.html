@@ -6,7 +6,7 @@
     <title>tree's | Premium</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src='//libtl.com/sdk.js' data-zone='10516961' data-sdk='show_10516961'></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script> <script src='//libtl.com/sdk.js' data-zone='10516961' data-sdk='show_10516961'></script>
     <script src='//libtl.com/sdk.js' data-zone='10518617' data-sdk='show_10518617'></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -24,6 +24,24 @@
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(0,0,0,0.9); border-bottom: 1px solid #1a1a1a; position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px); }
         .brand-name { font-size: 1.2rem; font-weight: 800; color: white; letter-spacing: 0.5px; }
         .brand-name span { color: var(--primary-green); }
+
+        /* Original Bright Notice Bar */
+        .notice-bar { 
+            background: #32cd32; 
+            color: #000000; 
+            padding: 15px; 
+            margin: 15px; 
+            border-radius: 12px; 
+            font-size: 0.88rem; 
+            font-weight: 700; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            box-shadow: 0 4px 20px rgba(50, 205, 50, 0.4); 
+            line-height: 1.4;
+        }
+        .notice-content { display: flex; align-items: flex-start; gap: 12px; }
+        .notice-content i { margin-top: 3px; font-size: 1.1rem; }
 
         .container { padding: 18px; }
         .page { display: none; }
@@ -51,6 +69,13 @@
 
         .input-box { width: 100%; padding: 15px; background: #151515; border: 1px solid #222; border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
         .btn-main { width: 100%; background: var(--primary-green); color: black; border: none; padding: 16px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; }
+
+        /* New Profile Pic Styles */
+        .profile-header { text-align: center; padding: 30px 0; }
+        .profile-pic-container { position: relative; width: 110px; height: 110px; margin: 0 auto 15px auto; cursor: pointer; }
+        .profile-pic { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary-green); background: #1a1a1a; box-shadow: 0 0 20px rgba(50,205,50,0.2); }
+        .cam-icon { position: absolute; bottom: 5px; right: 5px; background: var(--primary-green); color: black; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; border: 2px solid #000; }
+        .username-tag { color: var(--primary-green); font-weight: 700; font-size: 1rem; margin-top: 5px; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -60,7 +85,8 @@
     <div id="auth-section" style="display:none;">
         <div id="signup-page" class="auth-container">
             <h2 style="text-align: center;">Join <span>tree's</span></h2>
-            <input type="text" id="reg-name" class="input-box" placeholder="Your Name">
+            <input type="text" id="reg-name" class="input-box" placeholder="Your Full Name">
+            <input type="text" id="reg-username" class="input-box" placeholder="Set a Username (e.g. boss123)">
             <input type="email" id="reg-email" class="input-box" placeholder="Email Address">
             <input type="number" id="reg-phone" class="input-box" placeholder="Phone Number">
             <input type="password" id="reg-pass" class="input-box" placeholder="Password">
@@ -82,6 +108,14 @@
             <div class="brand-name"><span>tree's</span></div>
             <div style="color: var(--text-gray); font-size: 1.2rem; cursor: pointer;" onclick="window.open('https://t.me/freeerningbyboshir', '_blank')"><i class="fab fa-telegram"></i></div>
         </header>
+
+        <div class="notice-bar" id="app-notice">
+            <div class="notice-content">
+                <i class="fas fa-bullhorn"></i>
+                <span>সকল ইউজার দের অবগতির জন্য জানানো যাচ্ছে এটা আমদের একটা ডেমো এপ আগামী তে এটাকে ভালো ভাবে বিল্ড করা হবে এবং সহজ উপায়ে উপার্জন এর ব্যাবস্থা করা হবে । ১০০% পেমেন্ট দেওয়া হবে</span>
+            </div>
+            <i class="fas fa-times-circle" style="cursor:pointer; font-size: 1.2rem; margin-left: 10px;" onclick="document.getElementById('app-notice').style.display='none'"></i>
+        </div>
         
         <div class="container">
             <div id="home" class="page active">
@@ -94,7 +128,8 @@
                     </div>
                 </div>
 
-                <h4 style="margin-bottom: 15px;">Daily Tasks <span id="tasks-left" style="float:right; color:var(--primary-green); font-size:0.8rem;">15 Left</span></h4>
+                <h4 style="margin-bottom: 5px;">Daily Tasks <span id="tasks-left" style="float:right; color:var(--primary-green); font-size:0.8rem;">15 Left</span></h4>
+                <p style="color: var(--text-gray); font-size: 0.75rem; margin-bottom: 15px; margin-top: 0;">Daily Task Regula 4 Hour pore pore 15 Ta Kore task asbe</p>
                 
                 <div class="task-grid">
                     <div class="task-card" style="border: 1px solid var(--primary-green);">
@@ -162,10 +197,16 @@
             </div>
 
             <div id="profile" class="page">
-                <div style="text-align:center; padding:30px 0;">
-                    <div style="width:70px; height:70px; background:var(--primary-green); border-radius:50%; margin:auto; display:flex; align-items:center; justify-content:center; color:black; font-size:1.5rem; font-weight:bold;" id="user-initial">T</div>
-                    <h3 id="prof-name">User</h3>
-                    <p id="prof-email" style="color:gray;"></p>
+                <div class="profile-header">
+                    <div class="profile-pic-container" onclick="document.getElementById('pic-upload').click()">
+                        <img src="https://via.placeholder.com/150" id="user-pfp" class="profile-pic" alt="Profile">
+                        <div class="cam-icon"><i class="fas fa-camera"></i></div>
+                    </div>
+                    <input type="file" id="pic-upload" style="display:none" accept="image/*" onchange="uploadPhoto(this)">
+                    
+                    <h3 id="prof-name" style="margin-bottom: 5px;">User Name</h3>
+                    <div id="prof-username" class="username-tag">@username</div>
+                    <p id="prof-email" style="color:gray; font-size: 0.9rem; margin-top: 5px;"></p>
                 </div>
                 <div style="background:#111; padding:20px; border-radius:15px;">
                     <p>Powered by: tree's Team</p>
@@ -189,12 +230,14 @@
           authDomain: "earnings-by-boshir.firebaseapp.com",
           databaseURL: "https://earnings-by-boshir-default-rtdb.firebaseio.com",
           projectId: "earnings-by-boshir",
-          storageBucket: "earnings-by-boshir.firebasestorage.app",
+          storageBucket: "earnings-by-boshir.appspot.com", // Ensure this is correct from Firebase Console
           messagingSenderId: "376974811547",
           appId: "1:376974811547:web:13d7b928108c59b068013e"
         };
+        
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const storage = firebase.storage();
         const APP_LINK = "https://trees-bay.vercel.app/"; 
         let currentUser = null;
 
@@ -212,11 +255,52 @@
                 const data = s.val();
                 if(data) {
                     currentUser = data;
+                    checkAndResetTasks(key);
                     hideLoading();
                     document.getElementById('auth-section').style.display='none';
                     document.getElementById('main-app').style.display='block';
                     updateUI();
                 } else { hideLoading(); toggleAuth('login'); }
+            });
+        }
+
+        // --- 4 Hour Task Reset Logic ---
+        function checkAndResetTasks(userKey) {
+            const now = Date.now();
+            const lastReset = currentUser.lastReset || 0;
+            const fourHours = 4 * 60 * 60 * 1000;
+
+            if (now - lastReset >= fourHours) {
+                db.ref('users/' + userKey).update({
+                    tasks: 15,
+                    lastReset: now
+                });
+            }
+        }
+
+        // --- Photo Upload Logic ---
+        function uploadPhoto(input) {
+            if(!input.files[0]) return;
+            const file = input.files[0];
+            const key = currentUser.email.replace(/\./g, '_');
+            
+            // Create a reference to storage
+            const ref = storage.ref().child('profiles/' + key);
+            
+            // Simple loading indicator
+            document.querySelector('.profile-pic').style.opacity = '0.5';
+            
+            ref.put(file).then(snapshot => {
+                return snapshot.ref.getDownloadURL();
+            }).then(url => {
+                // Update database with new photo URL
+                db.ref('users/' + key).update({ profilePic: url });
+                document.querySelector('.profile-pic').style.opacity = '1';
+                alert("Profile picture updated!");
+            }).catch(error => {
+                console.error(error);
+                document.querySelector('.profile-pic').style.opacity = '1';
+                alert("Error uploading image. Check console.");
             });
         }
 
@@ -226,11 +310,18 @@
             document.getElementById('user-coins').innerText = coins + " Coins";
             document.querySelectorAll('.wallet-coins').forEach(el => el.innerText = coins + " Coins");
             document.getElementById('tasks-left').innerText = (currentUser.tasks || 0) + " Left";
+            
+            // Profile Updates
             document.getElementById('prof-name').innerText = currentUser.name;
             document.getElementById('prof-email').innerText = currentUser.email;
+            document.getElementById('prof-username').innerText = "@" + (currentUser.username || "user");
+            
+            if(currentUser.profilePic) {
+                document.getElementById('user-pfp').src = currentUser.profilePic;
+            }
+            
             document.getElementById('ref-code-display').innerText = currentUser.refCode;
             document.getElementById('ref-count-display').innerText = currentUser.referCount || 0;
-            document.getElementById('user-initial').innerText = currentUser.name.charAt(0).toUpperCase();
             
             if(currentUser.coins >= 5000) {
                 document.getElementById('withdrawal-locked').style.display = 'none';
@@ -239,15 +330,12 @@
         }
 
         function startTask(zoneId) {
-            if(currentUser.tasks <= 0) return alert("No tasks left today!");
-            
+            if(currentUser.tasks <= 0) return alert("Task Limit Reached! Wait for reset.");
             const sdkName = 'show_' + zoneId;
             const reward = (zoneId === '10518617') ? 50 : 20;
 
-            // যদি SDK লোড হয়ে থাকে তবে অ্যাড দেখাবে
             if (typeof window[sdkName] === 'function') {
                 window[sdkName]().then(() => {
-                    // অ্যাড দেখার পর রিওয়ার্ড দেওয়া হবে
                     const key = currentUser.email.replace(/\./g, '_');
                     db.ref('users/' + key).update({ 
                         tasks: currentUser.tasks - 1,
@@ -259,13 +347,11 @@
                     alert("Ad failed to load. Please try again later.");
                 });
             } else {
-                // সচরাচর লিংকের জন্য ফলব্যাক
                 window.open('https://otieu.com/4/' + zoneId, '_blank');
                 alert("Please wait for the page to load to receive coins.");
             }
         }
 
-        // --- Auth & Other Logic (Keep as is) ---
         function toggleAuth(type) {
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('auth-section').style.display = 'block';
@@ -289,17 +375,35 @@
 
         async function handleSignup() {
             const name = document.getElementById('reg-name').value;
+            const username = document.getElementById('reg-username').value.trim(); // Get Username
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
-            if(!name || !email || !pass) return alert("Fill all fields!");
+            
+            if(!name || !username || !email || !pass) return alert("Fill all fields including Username!");
+            
             const key = email.replace(/\./g, '_');
             const refCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             
-            db.ref('users/' + key).set({
-                name, email, pass, refCode, coins: 0, tasks: 15, referCount: 0
-            }).then(() => {
-                localStorage.setItem('loggedUserEmail', email);
-                loadFirebaseData(key);
+            // Check if user already exists (basic check)
+            db.ref('users/' + key).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    alert("User already exists!");
+                } else {
+                    db.ref('users/' + key).set({
+                        name, 
+                        username: username.toLowerCase(),
+                        email, 
+                        pass, 
+                        refCode, 
+                        coins: 0, 
+                        tasks: 15, 
+                        referCount: 0, 
+                        lastReset: Date.now()
+                    }).then(() => {
+                        localStorage.setItem('loggedUserEmail', email);
+                        loadFirebaseData(key);
+                    });
+                }
             });
         }
 
@@ -325,8 +429,21 @@
             float.style.left = e.clientX + 'px'; float.style.top = e.clientY + 'px';
             document.body.appendChild(float);
             setTimeout(() => float.remove(), 700);
+            
             const key = currentUser.email.replace(/\./g, '_');
-            db.ref('users/' + key).update({ coins: (parseFloat(currentUser.coins) + 0.002).toFixed(4) });
+            db.ref('users/' + key).update({
+                coins: (parseFloat(currentUser.coins) + 0.002).toFixed(3)
+            });
+        }
+
+        function copyRef() {
+            navigator.clipboard.writeText(currentUser.refCode);
+            alert("Refer code copied!");
+        }
+
+        function shareReferral() {
+            const text = `Join tree's and earn money! Use my code: ${currentUser.refCode} \nLink: ${APP_LINK}`;
+            window.open(`https://t.me/share/url?url=${APP_LINK}&text=${encodeURIComponent(text)}`);
         }
     </script>
 </body>
