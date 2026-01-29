@@ -25,6 +25,7 @@
             --text-muted: #888888;
             --gradient-main: linear-gradient(135deg, #00ffa3 0%, #008f5d 100%);
             --border: rgba(255, 255, 255, 0.1);
+            --error: #ff4444;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -60,7 +61,7 @@
         .app-branding { text-align: center; margin-bottom: 40px; }
         .app-branding h1 { font-size: 2.5rem; margin: 0; background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        .input-group { margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; position: relative; }
         .input-box {
             width: 100%; padding: 16px; background: var(--surface-light);
             border: 1px solid var(--border); border-radius: 12px;
@@ -68,6 +69,7 @@
             transition: 0.3s; outline: none;
         }
         .input-box:focus { border-color: var(--primary); }
+        .input-hint { font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; display: block; }
         
         .btn-main {
             width: 100%; padding: 16px; background: var(--gradient-main);
@@ -89,6 +91,24 @@
         }
         .header-title { font-weight: 700; font-size: 1.4rem; letter-spacing: -0.5px; }
         .header-title span { color: var(--primary); }
+
+        /* NOTICE BOARD */
+        .notice-container {
+            background: rgba(255, 68, 68, 0.15);
+            border-bottom: 1px solid rgba(255, 68, 68, 0.3);
+            padding: 8px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .notice-text {
+            color: #ffcccc;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee 15s linear infinite;
+        }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .container { padding: 20px; }
         .page { display: none; animation: fadeIn 0.4s ease; }
@@ -113,6 +133,17 @@
             margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;
             border: 1px solid var(--border);
         }
+
+        /* Referral List Styles */
+        .referral-list-header { font-weight: bold; margin-bottom: 10px; color: var(--primary); font-size: 1.1rem; }
+        .referral-entry {
+            display: flex; justify-content: space-between;
+            padding: 10px; border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+        .referral-entry:last-child { border-bottom: none; }
+        .ref-name { color: white; }
+        .ref-bonus { color: var(--primary); font-weight: bold; }
 
         /* Tap Area */
         .tap-area { min-height: 55vh; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
@@ -156,8 +187,13 @@
             <div class="app-branding"><h1>tree's</h1><p>Create Account</p></div>
             <div class="input-group"><input type="text" id="reg-name" class="input-box" placeholder="Full Name"></div>
             <div class="input-group"><input type="text" id="reg-username" class="input-box" placeholder="Telegram Username"></div>
-            <div class="input-group"><input type="email" id="reg-email" class="input-box" placeholder="Email"></div>
-            <div class="input-group"><input type="password" id="reg-pass" class="input-box" placeholder="Password"></div>
+            <div class="input-group">
+                <input type="email" id="reg-email" class="input-box" placeholder="Email (e.g., name@gmail.com)">
+            </div>
+            <div class="input-group">
+                <input type="password" id="reg-pass" class="input-box" placeholder="Password">
+                <span class="input-hint">Must contain Capital, Number & Special Char (e.g. Pass@123)</span>
+            </div>
             <div class="input-group"><input type="text" id="reg-ref" class="input-box" placeholder="Referral Code"></div>
             <button class="btn-main" onclick="handleSignup()">Sign Up</button>
             <p style="text-align:center; margin-top:20px; color:var(--text-muted);" onclick="toggleAuth('login')">Already have an account? <span style="color:var(--primary);">Login</span></p>
@@ -178,6 +214,12 @@
             <div style="color:white;" onclick="window.open('https://t.me/freeerningbyboshir', '_blank')"><i class="fab fa-telegram-plane"></i></div>
         </header>
 
+        <div class="notice-container">
+            <div class="notice-text">
+                ⚠️ এই এপ এ কাজ করেন ১০০ % পেমেন্ট দেওয়া হবে । কেউ চিটিং করবেন না একটা মোবাইল দিয়ে ১ টার বেশি আইডি করবেন না তাহলে আইডি ব্যান হয়ে যাবে ⚠️
+            </div>
+        </div>
+
         <div class="container">
             <div id="home" class="page active">
                 <div class="balance-card">
@@ -196,11 +238,11 @@
                     </div>
                     <div class="task-item">
                         <div><strong>Special Task</strong><br><small style="color:var(--text-muted);">+50 Coins</small></div>
-                        <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="startTask('10518617')">Start</button>
+                        <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="startTask('10518617', 50)">Start</button>
                     </div>
                     <div class="task-item">
                         <div><strong>Watch Video</strong><br><small style="color:var(--text-muted);">+20 Coins</small></div>
-                        <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="startTask('10516961')">Watch</button>
+                        <button class="btn-main" style="width:auto; padding:8px 15px;" onclick="startTask('10516961', 20)">Watch</button>
                     </div>
                 </div>
             </div>
@@ -235,6 +277,13 @@
                     <p style="color:var(--text-muted);">Your Code</p>
                     <h1 id="ref-code-display" style="letter-spacing:5px; color:var(--primary);">---</h1>
                     <button class="btn-main" onclick="copyRef()">Copy Code</button>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="referral-list-header">Referral History</div>
+                    <div id="referral-list-container">
+                        <p style="text-align:center; color:var(--text-muted); font-size:0.8rem;">No referrals yet.</p>
+                    </div>
                 </div>
             </div>
 
@@ -301,7 +350,31 @@
                     document.getElementById('auth-section').style.display='none';
                     document.getElementById('main-app').style.display='block';
                     updateUI();
+                    loadReferralList(key); // Load Referrals
                 } else { toggleAuth('login'); }
+            });
+        }
+
+        // NO. 3: Render Referral List
+        function loadReferralList(userKey) {
+            db.ref('users/' + userKey + '/referrals').on('value', snapshot => {
+                const list = document.getElementById('referral-list-container');
+                list.innerHTML = '';
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const refData = child.val();
+                        const div = document.createElement('div');
+                        div.className = 'referral-entry';
+                        div.innerHTML = `
+                            <span class="ref-name">${refData.name}</span>
+                            <span class="ref-bonus">+${refData.bonus} 💰</span>
+                        `;
+                        list.appendChild(div);
+                    });
+                } else {
+                    list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.8rem;">No referrals yet.</p>';
+                }
             });
         }
 
@@ -330,6 +403,17 @@
             if(navigator.vibrate) navigator.vibrate(40);
         }
 
+        // Validation Functions
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function isStrongPassword(password) {
+            // Regex: At least 1 Upper, 1 Number, 1 Special Char, and reasonable length
+            // Special chars allowed: !@#$%^&* etc
+            return /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}$/.test(password);
+        }
+
         function handleSignup() {
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
@@ -337,22 +421,58 @@
             const uname = document.getElementById('reg-username').value;
             const refBy = document.getElementById('reg-ref').value;
 
-            if(!email || !pass || userIP === "Loading...") return alert("Wait or fill all fields");
+            // NO. 1 & 2: Validations
+            if(!email || !pass || !name || !uname) return alert("Fill all fields");
+            if(userIP === "Loading...") return alert("Wait for IP detection");
+            
+            if(!isValidEmail(email)) {
+                return alert("Wrong Gmail Format! Please use a valid email.");
+            }
+
+            if(!isStrongPassword(pass)) {
+                return alert("Password is too weak! Use at least 1 Capital Letter, 1 Number, and 1 Special Character (@, #, etc).");
+            }
 
             db.ref('users').orderByChild('ip').equalTo(userIP).once('value', snapshot => {
-                if(snapshot.exists()) return alert("Device already has an account!");
+                if(snapshot.exists()) return alert("Device already has an account! (Notice Rule)");
                 
                 const key = email.replace(/\./g, '_');
-                const refCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-                
-                const newUser = {
-                    name, username: uname, email, pass, 
-                    coins: 0, referralCode: refCode, ip: userIP
-                };
+                // Check if email already used
+                db.ref('users/' + key).once('value', emailSnap => {
+                    if(emailSnap.exists()) return alert("Email already registered!");
 
-                db.ref('users/' + key).set(newUser).then(() => {
-                    localStorage.setItem('loggedUserEmail', email);
-                    location.reload();
+                    const refCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    
+                    const newUser = {
+                        name, username: uname, email, pass, 
+                        coins: 0, referralCode: refCode, ip: userIP
+                    };
+
+                    db.ref('users/' + key).set(newUser).then(() => {
+                        // NO. 3: Handle Referral Logic (Give bonus to referrer)
+                        if(refBy) {
+                            db.ref('users').orderByChild('referralCode').equalTo(refBy).once('value', refSnap => {
+                                if(refSnap.exists()) {
+                                    const referrerKey = Object.keys(refSnap.val())[0];
+                                    const referrerData = refSnap.val()[referrerKey];
+                                    
+                                    // Add 200 coins to referrer
+                                    const updatedCoins = (parseFloat(referrerData.coins || 0) + 200).toFixed(3);
+                                    db.ref('users/' + referrerKey).update({ coins: updatedCoins });
+
+                                    // Add to referrer's list
+                                    db.ref('users/' + referrerKey + '/referrals').push({
+                                        name: name,
+                                        bonus: 200,
+                                        date: new Date().toISOString()
+                                    });
+                                }
+                            });
+                        }
+
+                        localStorage.setItem('loggedUserEmail', email);
+                        location.reload();
+                    });
                 });
             });
         }
@@ -360,6 +480,9 @@
         function handleLogin() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
+
+            if(!isValidEmail(email)) return alert("Invalid Email Format");
+
             db.ref('users/' + email.replace(/\./g, '_')).once('value', s => {
                 if(s.exists() && s.val().pass === pass) {
                     localStorage.setItem('loggedUserEmail', email);
@@ -368,20 +491,28 @@
             });
         }
 
-        function startTask(id) {
+        // NO. 5: Strict Ad Verification
+        function startTask(id, amount) {
             const taskFunc = window['show_' + id];
+            
             if(typeof taskFunc === 'function') {
-                taskFunc().then(() => reward(id === '10518617' ? 50 : 20));
+                // Assuming the SDK returns a Promise (Standard for Monetag)
+                taskFunc().then(() => {
+                    reward(amount);
+                }).catch(e => {
+                    // Ad was closed early or failed
+                    alert("Task incomplete! Please watch the full ad.");
+                });
             } else {
-                alert("Loading Ad...");
-                setTimeout(() => reward(id === '10518617' ? 50 : 20), 3000);
+                // If function doesn't exist (e.g. AdBlocker active)
+                alert("Ad failed to load. Please disable AdBlocker and try again. No coins added.");
             }
         }
 
         function reward(amt) {
             const newTotal = (parseFloat(currentUser.coins) + amt).toFixed(3);
             db.ref('users/' + currentUser.email.replace(/\./g, '_')).update({ coins: newTotal });
-            alert("Earned " + amt + " coins!");
+            alert("Success! Earned " + amt + " coins!");
         }
 
         function navigateTo(id, el) {
