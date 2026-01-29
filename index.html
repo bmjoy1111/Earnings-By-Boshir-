@@ -7,6 +7,7 @@
     <title>Tree's | Earning Hub</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     
     <script src='//libtl.com/sdk.js' data-zone='10516961' data-sdk='show_10516961'></script>
@@ -18,6 +19,7 @@
     <style>
         :root {
             --primary: #00ffa3;
+            --binance-yellow: #F3BA2F;
             --bg-dark: #050505;
             --surface: #121212;
             --surface-light: #1e1e1e;
@@ -183,6 +185,19 @@
         @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
         /* --- GAME STYLES END --- */
 
+        /* Binance Card Styles */
+        .binance-card {
+            border: 1px solid rgba(243, 186, 47, 0.3);
+            background: radial-gradient(circle at top left, rgba(243, 186, 47, 0.05) 0%, #121212 100%);
+        }
+        .binance-connected {
+            color: var(--primary);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
         /* Nav Dock */
         .nav-dock-container { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 1000; }
         .nav-dock {
@@ -197,6 +212,14 @@
         .pfp-wrap { width: 100px; height: 100px; margin: 0 auto; border-radius: 50%; padding: 3px; background: var(--gradient-main); }
         .pfp-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--bg-dark); background: #222; }
         .ip-badge { display: inline-block; background: rgba(0, 255, 163, 0.1); color: var(--primary); padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; margin-top: 10px; border: 1px solid rgba(0, 255, 163, 0.2); }
+        
+        /* Toast Notification */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 10px; padding: 16px; position: fixed; z-index: 9999; bottom: 100px; left: 50%; transform: translateX(-50%); font-size: 17px; border: 1px solid var(--primary);
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 100px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 100px; opacity: 1;} to {bottom: 0; opacity: 0;} }
     </style>
 </head>
 <body>
@@ -205,6 +228,8 @@
         <div class="loader-logo">🌴</div>
         <div class="bar-loader"><div class="bar-fill"></div></div>
     </div>
+
+    <div id="toast">Notification</div>
 
     <div id="auth-section" style="display:none;">
         <div id="signup-page" class="auth-container">
@@ -305,14 +330,41 @@
                     Memorize the green pattern and repeat it!
                 </div>
             </div>
+
             <div id="wallet" class="page">
                 <div class="balance-card">
                     <div class="currency-label">Withdrawable</div>
                     <div class="balance-amount wallet-coins">0.000</div>
                 </div>
+                
+                <div class="glass-card binance-card" style="padding: 15px; margin-top: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <i class="fab fa-bitcoin" style="font-size: 24px; color: var(--binance-yellow);"></i>
+                            <div>
+                                <strong style="color:white;">Binance Connect</strong><br>
+                                <small id="binance-status-text" style="color:var(--text-muted);">Add your Binance UID</small>
+                            </div>
+                        </div>
+                        <button class="btn-main" style="width:auto; padding:5px 15px; font-size:0.8rem; background: var(--surface-light); border: 1px solid var(--border); color:white;" onclick="toggleBinanceInput()">Edit</button>
+                    </div>
+                    
+                    <div id="binance-input-area" style="display:none; margin-top:15px; padding-top:15px; border-top:1px solid var(--border);">
+                        <input type="number" id="binance-uid-input" class="input-box" placeholder="Enter Binance UID (Numbers only)" style="margin-bottom:10px;">
+                        <button class="btn-main" onclick="saveBinanceUID()">Save UID</button>
+                    </div>
+                    
+                    <div id="binance-connected-badge" style="display:none; margin-top:10px; background: rgba(0,255,163,0.1); padding: 8px; border-radius: 8px;">
+                        <div class="binance-connected">
+                            <i class="fas fa-check-circle"></i> Connected UID: <span id="display-uid" style="color:white; margin-left:5px;"></span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="glass-card" style="margin-top:20px; padding:20px;">
+                    <h3>Withdraw Funds</h3>
                     <input type="number" id="w-amount" class="input-box" placeholder="Amount (Min 5000)" style="margin-bottom:10px;">
-                    <input type="text" id="w-number" class="input-box" placeholder="Bkash/Nagad Number">
+                    <input type="text" id="w-number" class="input-box" placeholder="Number or Binance UID (if connected)">
                     <button class="btn-main" onclick="requestWithdraw()">Withdraw Now</button>
                 </div>
             </div>
@@ -338,6 +390,7 @@
                     <h2 id="prof-name">Name</h2>
                     <div id="prof-username" style="color:var(--primary);">@username</div>
                     <div id="ip-display" class="ip-badge">IP: Loading...</div>
+                    <div id="profile-binance-status" style="margin-top:5px; font-size:0.8rem; color:var(--text-muted);"></div>
                 </div>
                 <div class="glass-card" style="padding:10px;">
                     <div class="task-item" style="border:none; cursor:pointer;" onclick="openWhatsApp()">
@@ -361,327 +414,341 @@
     </div>
 
     <script>
+        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
           apiKey: "AIzaSyC1eNeuHbJbBCGxkMnpPEGJqNgtqFzTFuw",
           authDomain: "earnings-by-boshir.firebaseapp.com",
           databaseURL: "https://earnings-by-boshir-default-rtdb.firebaseio.com",
           projectId: "earnings-by-boshir",
           storageBucket: "earnings-by-boshir.appspot.com",
-          messagingSenderId: "376974811547",
-          appId: "1:376974811547:web:13d7b928108c59b068013e"
+          messagingSenderId: "123456789", 
+          appId: "1:123456789:web:abcdef"
         };
-        
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
         const db = firebase.database();
+
+        // --- STATE MANAGEMENT ---
         let currentUser = null;
-        let userIP = "Loading...";
-
-        // GAME VARS
+        let userData = {};
         let gameLevel = 1;
-        let gameSequence = [];
-        let playerSequence = [];
-        let isGameInputActive = false;
-        let gridSize = 3;
+        let gamePattern = [];
+        let userPattern = [];
 
-        fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => {
-            userIP = d.ip;
-            if(document.getElementById('ip-display')) document.getElementById('ip-display').innerText = "IP: " + userIP;
-        });
-
-        window.onload = () => {
-            const savedEmail = localStorage.getItem('loggedUserEmail');
-            if(savedEmail) loadFirebaseData(savedEmail.replace(/\./g, '_'));
-            else { document.getElementById('loading-screen').style.display='none'; toggleAuth('login'); }
+        // --- AUTH LOGIC ---
+        window.onload = function() {
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    currentUser = user;
+                    loadUserData();
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'block';
+                    fetchIP();
+                } else {
+                    document.getElementById('loading-screen').style.display = 'none';
+                    document.getElementById('auth-section').style.display = 'flex';
+                }
+            });
         };
 
-        function loadFirebaseData(key) {
-            db.ref('users/' + key).on('value', s => {
-                currentUser = s.val();
-                if(currentUser) {
-                    document.getElementById('loading-screen').style.display='none';
-                    document.getElementById('auth-section').style.display='none';
-                    document.getElementById('main-app').style.display='block';
-                    
-                    // Initialize Game Level if not present
-                    if(!currentUser.gameLevel) {
-                        db.ref('users/' + key).update({ gameLevel: 1 });
-                    }
-                    
-                    updateUI();
-                    loadReferralList(key);
-                } else { toggleAuth('login'); }
-            });
-        }
-
-        function loadReferralList(userKey) {
-            db.ref('users/' + userKey + '/referrals').on('value', snapshot => {
-                const list = document.getElementById('referral-list-container');
-                list.innerHTML = '';
-                
-                if (snapshot.exists()) {
-                    snapshot.forEach(child => {
-                        const refData = child.val();
-                        const div = document.createElement('div');
-                        div.className = 'referral-entry';
-                        div.innerHTML = `
-                            <span class="ref-name">${refData.name}</span>
-                            <span class="ref-bonus">+${refData.bonus} 💰</span>
-                        `;
-                        list.appendChild(div);
-                    });
-                } else {
-                    list.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size:0.8rem;">No referrals yet.</p>';
-                }
-            });
-        }
-
-        function updateUI() {
-            const coins = parseFloat(currentUser.coins || 0).toFixed(3);
-            document.getElementById('user-coins').innerText = coins;
-            document.querySelectorAll('.wallet-coins').forEach(e => e.innerText = coins);
-            document.getElementById('prof-name').innerText = currentUser.name;
-            document.getElementById('prof-username').innerText = "@" + currentUser.username;
-            document.getElementById('ref-code-display').innerText = currentUser.referralCode;
-            document.getElementById('user-pfp').src = `https://ui-avatars.com/api/?name=${currentUser.username}&background=00ffa3&color=000&bold=true`;
-            
-            // Update Game UI
-            gameLevel = currentUser.gameLevel || 1;
-            document.getElementById('game-level-disp').innerText = gameLevel;
-        }
-
-        /* --- GAME LOGIC START --- */
-        function initGameLevel() {
-            const board = document.getElementById('game-board');
-            const btn = document.getElementById('start-game-btn');
-            
-            // Difficulty Scaling logic (Max 100 levels)
-            // Lvl 1-10: 3x3, Lvl 11-40: 4x4, Lvl 40+: 5x5
-            if(gameLevel <= 10) gridSize = 3;
-            else if(gameLevel <= 40) gridSize = 4;
-            else gridSize = 5;
-
-            // Pattern length increases every 10 levels
-            let patternLength = 3 + Math.floor(gameLevel / 10);
-            
-            board.innerHTML = '';
-            board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
-            gameSequence = [];
-            playerSequence = [];
-            
-            // Create Grid
-            for(let i=0; i < gridSize * gridSize; i++) {
-                let tile = document.createElement('div');
-                tile.className = 'game-tile';
-                tile.dataset.index = i;
-                tile.onclick = () => handleTileClick(i, tile);
-                board.appendChild(tile);
-            }
-
-            // Generate Pattern
-            for(let i=0; i < patternLength; i++) {
-                gameSequence.push(Math.floor(Math.random() * (gridSize * gridSize)));
-            }
-
-            btn.style.display = 'none';
-            document.getElementById('game-status').innerText = "Memorize Pattern...";
-            
-            // Play Pattern
-            let speed = Math.max(400, 800 - (gameLevel * 5)); // Gets faster
-            let delay = 0;
-            
-            gameSequence.forEach((index, i) => {
-                setTimeout(() => {
-                    let tiles = document.querySelectorAll('.game-tile');
-                    tiles[index].classList.add('active');
-                    setTimeout(() => tiles[index].classList.remove('active'), speed/2);
-                }, delay);
-                delay += speed;
-            });
-
-            setTimeout(() => {
-                isGameInputActive = true;
-                document.getElementById('game-status').innerText = "Repeat Pattern!";
-            }, delay);
-        }
-
-        function handleTileClick(index, tile) {
-            if(!isGameInputActive) return;
-
-            tile.classList.add('active');
-            setTimeout(() => tile.classList.remove('active'), 200);
-
-            playerSequence.push(index);
-
-            // Check correctness immediately
-            const currentStep = playerSequence.length - 1;
-            
-            if(playerSequence[currentStep] !== gameSequence[currentStep]) {
-                // WRONG
-                isGameInputActive = false;
-                tile.classList.add('wrong');
-                document.getElementById('game-status').innerText = "Wrong! Try Again.";
-                document.getElementById('start-game-btn').innerText = "Retry Level";
-                document.getElementById('start-game-btn').style.display = 'block';
+        function toggleAuth(type) {
+            if(type === 'signup') {
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('signup-page').style.display = 'flex';
             } else {
-                // CORRECT STEP
-                if(playerSequence.length === gameSequence.length) {
-                    // LEVEL COMPLETE
-                    isGameInputActive = false;
-                    document.getElementById('game-status').innerText = "Correct! +10 Coins";
-                    
-                    // Update Firebase
-                    const newCoins = (parseFloat(currentUser.coins || 0) + 10).toFixed(3);
-                    const nextLevel = gameLevel + 1;
-                    
-                    db.ref('users/' + currentUser.email.replace(/\./g, '_')).update({
-                        coins: newCoins,
-                        gameLevel: nextLevel
-                    });
-
-                    setTimeout(() => {
-                        document.getElementById('start-game-btn').innerText = "Start Level " + nextLevel;
-                        document.getElementById('start-game-btn').style.display = 'block';
-                    }, 1000);
-                }
+                document.getElementById('signup-page').style.display = 'none';
+                document.getElementById('login-page').style.display = 'flex';
             }
-        }
-        /* --- GAME LOGIC END --- */
-
-        function handleTap(e) {
-            const key = currentUser.email.replace(/\./g, '_');
-            const newCoins = (parseFloat(currentUser.coins || 0) + 0.002).toFixed(3);
-            db.ref('users/' + key).update({ coins: newCoins });
-
-            const float = document.createElement('div');
-            float.className = 'floating-score';
-            float.innerText = '+0.002';
-            float.style.left = e.clientX + 'px';
-            float.style.top = e.clientY + 'px';
-            document.body.appendChild(float);
-            setTimeout(() => float.remove(), 800);
-            if(navigator.vibrate) navigator.vibrate(40);
-        }
-
-        function isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        function isStrongPassword(password) {
-            return /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}$/.test(password);
         }
 
         function handleSignup() {
+            const name = document.getElementById('reg-name').value;
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-pass').value;
-            const name = document.getElementById('reg-name').value;
-            const uname = document.getElementById('reg-username').value;
-            const refBy = document.getElementById('reg-ref').value;
+            const username = document.getElementById('reg-username').value;
+            const refCode = document.getElementById('reg-ref').value;
 
-            if(!email || !pass || !name || !uname) return alert("Fill all fields");
-            if(userIP === "Loading...") return alert("Wait for IP detection");
-            
-            if(!isValidEmail(email)) {
-                return alert("Wrong Gmail Format! Please use a valid email.");
-            }
+            if(!name || !email || !pass || !username) { showToast("Fill all fields"); return; }
 
-            if(!isStrongPassword(pass)) {
-                return alert("Password is too weak! Use at least 1 Capital Letter, 1 Number, and 1 Special Character (@, #, etc).");
-            }
-
-            db.ref('users').orderByChild('ip').equalTo(userIP).once('value', snapshot => {
-                if(snapshot.exists()) return alert("Device already has an account! (Notice Rule)");
-                
-                const key = email.replace(/\./g, '_');
-                db.ref('users/' + key).once('value', emailSnap => {
-                    if(emailSnap.exists()) return alert("Email already registered!");
-
-                    const refCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            auth.createUserWithEmailAndPassword(email, pass)
+                .then((cred) => {
+                    const uid = cred.user.uid;
+                    const ownRefCode = Math.random().toString(36).substring(2, 8).toUpperCase();
                     
                     const newUser = {
-                        name, username: uname, email, pass, 
-                        coins: 0, referralCode: refCode, ip: userIP,
-                        gameLevel: 1 // Init Game Level
+                        name: name,
+                        email: email,
+                        username: username,
+                        balance: 0,
+                        refCode: ownRefCode,
+                        referredBy: refCode || null,
+                        ip: 'fetching...',
+                        binance_uid: '' // Initial empty Binance UID
                     };
 
-                    db.ref('users/' + key).set(newUser).then(() => {
-                        if(refBy) {
-                            db.ref('users').orderByChild('referralCode').equalTo(refBy).once('value', refSnap => {
-                                if(refSnap.exists()) {
-                                    const referrerKey = Object.keys(refSnap.val())[0];
-                                    const referrerData = refSnap.val()[referrerKey];
-                                    
-                                    const updatedCoins = (parseFloat(referrerData.coins || 0) + 200).toFixed(3);
-                                    db.ref('users/' + referrerKey).update({ coins: updatedCoins });
-
-                                    db.ref('users/' + referrerKey + '/referrals').push({
-                                        name: name,
-                                        bonus: 200,
-                                        date: new Date().toISOString()
-                                    });
-                                }
-                            });
-                        }
-
-                        localStorage.setItem('loggedUserEmail', email);
-                        location.reload();
+                    db.ref('users/' + uid).set(newUser).then(() => {
+                        if(refCode) processReferralBonus(refCode);
+                        showToast("Account Created!");
                     });
-                });
-            });
+                })
+                .catch((e) => showToast(e.message));
         }
 
         function handleLogin() {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
+            auth.signInWithEmailAndPassword(email, pass).catch(e => showToast(e.message));
+        }
 
-            if(!isValidEmail(email)) return alert("Invalid Email Format");
-
-            db.ref('users/' + email.replace(/\./g, '_')).once('value', s => {
-                if(s.exists() && s.val().pass === pass) {
-                    localStorage.setItem('loggedUserEmail', email);
-                    location.reload();
-                } else alert("Wrong details!");
+        function handleLogout() {
+            auth.signOut().then(() => {
+                window.location.reload();
             });
         }
 
-        function startTask(id, amount) {
-            const taskFunc = window['show_' + id];
-            if(typeof taskFunc === 'function') {
-                taskFunc().then(() => {
-                    reward(amount);
-                }).catch(e => {
-                    alert("Task incomplete! Please watch the full ad.");
-                });
+        function loadUserData() {
+            db.ref('users/' + currentUser.uid).on('value', (snap) => {
+                userData = snap.val();
+                if(userData) {
+                    updateUI();
+                }
+            });
+        }
+
+        // --- UI UPDATES & BINANCE LOGIC ---
+        function updateUI() {
+            document.querySelectorAll('.wallet-coins').forEach(el => el.innerText = parseFloat(userData.balance || 0).toFixed(3));
+            document.getElementById('user-coins').innerText = parseFloat(userData.balance || 0).toFixed(3);
+            document.getElementById('ref-code-display').innerText = userData.refCode;
+            
+            document.getElementById('prof-name').innerText = userData.name;
+            document.getElementById('prof-username').innerText = '@' + userData.username;
+            document.getElementById('user-pfp').src = `https://ui-avatars.com/api/?name=${userData.name}&background=00ffa3&color=000`;
+
+            // Update Binance UI
+            if (userData.binance_uid && userData.binance_uid.length > 0) {
+                document.getElementById('binance-status-text').innerText = "Connected";
+                document.getElementById('binance-connected-badge').style.display = 'block';
+                document.getElementById('display-uid').innerText = userData.binance_uid;
+                document.getElementById('binance-uid-input').value = userData.binance_uid;
+                document.getElementById('profile-binance-status').innerText = "Binance Connected ✅";
             } else {
-                alert("Ad failed to load. Please disable AdBlocker and try again. No coins added.");
+                document.getElementById('binance-status-text').innerText = "Add your Binance UID";
+                document.getElementById('binance-connected-badge').style.display = 'none';
+                document.getElementById('profile-binance-status').innerText = "";
             }
         }
 
-        function reward(amt) {
-            const newTotal = (parseFloat(currentUser.coins) + amt).toFixed(3);
-            db.ref('users/' + currentUser.email.replace(/\./g, '_')).update({ coins: newTotal });
-            alert("Success! Earned " + amt + " coins!");
+        // --- BINANCE FUNCTIONS ---
+        function toggleBinanceInput() {
+            const area = document.getElementById('binance-input-area');
+            if (area.style.display === 'none') {
+                area.style.display = 'block';
+                area.style.animation = 'fadeIn 0.3s';
+            } else {
+                area.style.display = 'none';
+            }
         }
 
-        function navigateTo(id, el) {
+        function saveBinanceUID() {
+            const uidInput = document.getElementById('binance-uid-input').value;
+            
+            if (!uidInput || uidInput.length < 5) {
+                showToast("Please enter a valid UID");
+                return;
+            }
+
+            db.ref('users/' + currentUser.uid).update({
+                binance_uid: uidInput
+            }).then(() => {
+                showToast("Binance UID Connected!");
+                toggleBinanceInput();
+            }).catch(e => {
+                showToast("Error saving UID");
+            });
+        }
+
+        // --- WITHDRAWAL LOGIC ---
+        function requestWithdraw() {
+            const amount = parseFloat(document.getElementById('w-amount').value);
+            let number = document.getElementById('w-number').value;
+
+            if(amount < 5000) { showToast("Minimum withdraw 5000 coins"); return; }
+            if(amount > userData.balance) { showToast("Insufficient Balance"); return; }
+            
+            // If number is empty but Binance is connected, ask confirmation or use it
+            if (!number && userData.binance_uid) {
+                const confirmUse = confirm("Use connected Binance UID (" + userData.binance_uid + ") for withdrawal?");
+                if (confirmUse) {
+                    number = "Binance UID: " + userData.binance_uid;
+                } else {
+                    showToast("Please enter a number/ID");
+                    return;
+                }
+            } else if (!number) {
+                 showToast("Enter Number or Connect Binance"); 
+                 return;
+            }
+
+            const reqId = Date.now();
+            db.ref('withdrawals/' + reqId).set({
+                uid: currentUser.uid,
+                amount: amount,
+                target: number,
+                status: 'pending',
+                timestamp: new Date().toISOString()
+            });
+
+            // Deduct balance
+            db.ref('users/' + currentUser.uid).update({
+                balance: userData.balance - amount
+            });
+            
+            showToast("Withdrawal Requested!");
+            document.getElementById('w-amount').value = '';
+            document.getElementById('w-number').value = '';
+        }
+
+        // --- GAME LOGIC ---
+        function initGameLevel() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            gamePattern = [];
+            userPattern = [];
+            
+            // Generate Grid
+            for(let i=0; i<9; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'game-tile';
+                tile.id = 'tile-'+i;
+                tile.onclick = () => handleTileClick(i);
+                board.appendChild(tile);
+            }
+            
+            // Generate Pattern based on level
+            const steps = gameLevel + 2; 
+            for(let i=0; i<steps; i++) {
+                gamePattern.push(Math.floor(Math.random() * 9));
+            }
+
+            playPattern();
+        }
+
+        function playPattern() {
+            let i = 0;
+            const interval = setInterval(() => {
+                if(i >= gamePattern.length) { clearInterval(interval); return; }
+                const id = gamePattern[i];
+                const tile = document.getElementById('tile-'+id);
+                tile.classList.add('active');
+                setTimeout(() => tile.classList.remove('active'), 400);
+                i++;
+            }, 600);
+        }
+
+        function handleTileClick(index) {
+            const tile = document.getElementById('tile-'+index);
+            tile.classList.add('active');
+            setTimeout(() => tile.classList.remove('active'), 200);
+            
+            userPattern.push(index);
+            
+            // Check move
+            const currentStep = userPattern.length - 1;
+            if(userPattern[currentStep] !== gamePattern[currentStep]) {
+                tile.classList.add('wrong');
+                showToast("Wrong Pattern! Try Again");
+                setTimeout(initGameLevel, 1000);
+                return;
+            }
+
+            if(userPattern.length === gamePattern.length) {
+                // Win
+                const reward = 10 * gameLevel;
+                db.ref('users/' + currentUser.uid).update({
+                    balance: (userData.balance || 0) + reward
+                });
+                showToast(`Level ${gameLevel} Cleared! +${reward}`);
+                gameLevel++;
+                document.getElementById('game-level-disp').innerText = gameLevel;
+                setTimeout(initGameLevel, 1500);
+            }
+        }
+
+        // --- TAP LOGIC ---
+        function handleTap(e) {
+            // Animation
+            const tree = document.querySelector('.tree-container');
+            tree.style.transform = 'scale(0.9)';
+            setTimeout(() => tree.style.transform = 'scale(1)', 100);
+            
+            // Float Number
+            const float = document.createElement('div');
+            float.className = 'floating-score';
+            float.innerText = '+0.005';
+            float.style.left = e.clientX + 'px';
+            float.style.top = e.clientY + 'px';
+            document.body.appendChild(float);
+            setTimeout(() => float.remove(), 800);
+
+            // Update DB (Debounce suggested for prod, doing direct here)
+            const newBal = (userData.balance || 0) + 0.005;
+            db.ref('users/' + currentUser.uid).update({balance: newBal});
+        }
+
+        // --- UTILS ---
+        function navigateTo(pageId, navEl) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(el) {
+            document.getElementById(pageId).classList.add('active');
+            
+            if(navEl) {
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                el.classList.add('active');
+                navEl.classList.add('active');
             }
         }
 
-        function toggleAuth(p) {
-            document.getElementById('auth-section').style.display = 'flex';
-            document.getElementById('signup-page').style.display = p === 'signup' ? 'flex' : 'none';
-            document.getElementById('login-page').style.display = p === 'login' ? 'flex' : 'none';
+        function showToast(msg) {
+            const x = document.getElementById("toast");
+            x.innerText = msg;
+            x.className = "show";
+            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
         }
 
-        function openWhatsApp() { window.open("https://wa.me/966595617786", "_blank"); }
-        function handleLogout() { localStorage.clear(); location.reload(); }
-        function copyRef() { navigator.clipboard.writeText(currentUser.referralCode); alert("Copied!"); }
-        function shareReferral() { window.open(`https://t.me/share/url?url=https://trees-bay.vercel.app/&text=Join me on Tree's! Code: ${currentUser.referralCode}`); }
+        function copyRef() {
+            navigator.clipboard.writeText(userData.refCode);
+            showToast("Code Copied!");
+        }
+
+        function fetchIP() {
+            fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('ip-display').innerText = "IP: " + data.ip;
+                db.ref('users/' + currentUser.uid).update({ip: data.ip});
+            });
+        }
+        
+        function openWhatsApp() {
+             window.open('https://wa.me/+8801934567890', '_blank'); // Replace with your number
+        }
+
+        // Referral logic helper
+        function processReferralBonus(refCode) {
+            db.ref('users').orderByChild('refCode').equalTo(refCode).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    const referrerId = Object.keys(snapshot.val())[0];
+                    db.ref('users/' + referrerId).transaction(currentData => {
+                        if (currentData) {
+                            currentData.balance = (currentData.balance || 0) + 200; // Bonus
+                            return currentData;
+                        }
+                    });
+                }
+            });
+        }
     </script>
-<script src="https://pl28596429.effectivegatecpm.com/64/c4/ed/64c4ed68b6243995eaeed825caaad532.js"></script>
 </body>
 </html>
