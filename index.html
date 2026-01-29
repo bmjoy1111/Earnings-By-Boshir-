@@ -159,6 +159,30 @@
         .floating-score { position: absolute; color: var(--primary); font-weight: 800; font-size: 1.5rem; animation: floatUp 0.8s ease-out forwards; pointer-events: none; }
         @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-100px); } }
 
+        /* --- GAME STYLES START --- */
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .level-badge { background: var(--primary); color: black; padding: 5px 15px; border-radius: 20px; font-weight: 800; }
+        .game-board {
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            max-width: 300px; 
+            margin: 0 auto 20px auto;
+        }
+        .game-tile {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .game-tile.active { background: var(--primary); box-shadow: 0 0 15px var(--primary); transform: scale(0.95); }
+        .game-tile.wrong { background: var(--error); animation: shake 0.3s; }
+        .game-tile.correct { background: var(--primary); }
+        @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } 100% { transform: translateX(0); } }
+        /* --- GAME STYLES END --- */
+
         /* Nav Dock */
         .nav-dock-container { position: fixed; bottom: 20px; left: 0; width: 100%; display: flex; justify-content: center; z-index: 1000; }
         .nav-dock {
@@ -260,6 +284,27 @@
                 </div>
             </div>
 
+            <div id="game" class="page">
+                <div class="glass-card">
+                    <div class="game-header">
+                        <div>
+                            <strong>Cyber Pattern</strong><br>
+                            <small style="color:var(--text-muted);">Reward: 10 Coins/Level</small>
+                        </div>
+                        <div class="level-badge">LVL <span id="game-level-disp">1</span></div>
+                    </div>
+                    
+                    <div id="game-status" style="text-align:center; margin-bottom:15px; min-height:20px; color:var(--primary);">Ready to start?</div>
+                    
+                    <div id="game-board" class="game-board">
+                        </div>
+
+                    <button id="start-game-btn" class="btn-main" onclick="initGameLevel()">Start Level</button>
+                </div>
+                <div style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-top:10px;">
+                    Memorize the green pattern and repeat it!
+                </div>
+            </div>
             <div id="wallet" class="page">
                 <div class="balance-card">
                     <div class="currency-label">Withdrawable</div>
@@ -308,7 +353,7 @@
             <nav class="nav-dock">
                 <a href="#" class="nav-item active" onclick="navigateTo('home', this)"><i class="fas fa-home"></i></a>
                 <a href="#" class="nav-item" onclick="navigateTo('tap', this)"><i class="fas fa-fingerprint"></i></a>
-                <a href="#" class="nav-item" onclick="navigateTo('wallet', this)"><i class="fas fa-wallet"></i></a>
+                <a href="#" class="nav-item" onclick="navigateTo('game', this)"><i class="fas fa-gamepad"></i></a> <a href="#" class="nav-item" onclick="navigateTo('wallet', this)"><i class="fas fa-wallet"></i></a>
                 <a href="#" class="nav-item" onclick="navigateTo('refer', this)"><i class="fas fa-share-nodes"></i></a>
                 <a href="#" class="nav-item" onclick="navigateTo('profile', this)"><i class="fas fa-user"></i></a>
             </nav>
@@ -331,6 +376,13 @@
         let currentUser = null;
         let userIP = "Loading...";
 
+        // GAME VARS
+        let gameLevel = 1;
+        let gameSequence = [];
+        let playerSequence = [];
+        let isGameInputActive = false;
+        let gridSize = 3;
+
         fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => {
             userIP = d.ip;
             if(document.getElementById('ip-display')) document.getElementById('ip-display').innerText = "IP: " + userIP;
@@ -349,13 +401,18 @@
                     document.getElementById('loading-screen').style.display='none';
                     document.getElementById('auth-section').style.display='none';
                     document.getElementById('main-app').style.display='block';
+                    
+                    // Initialize Game Level if not present
+                    if(!currentUser.gameLevel) {
+                        db.ref('users/' + key).update({ gameLevel: 1 });
+                    }
+                    
                     updateUI();
-                    loadReferralList(key); // Load Referrals
+                    loadReferralList(key);
                 } else { toggleAuth('login'); }
             });
         }
 
-        // NO. 3: Render Referral List
         function loadReferralList(userKey) {
             db.ref('users/' + userKey + '/referrals').on('value', snapshot => {
                 const list = document.getElementById('referral-list-container');
@@ -386,7 +443,109 @@
             document.getElementById('prof-username').innerText = "@" + currentUser.username;
             document.getElementById('ref-code-display').innerText = currentUser.referralCode;
             document.getElementById('user-pfp').src = `https://ui-avatars.com/api/?name=${currentUser.username}&background=00ffa3&color=000&bold=true`;
+            
+            // Update Game UI
+            gameLevel = currentUser.gameLevel || 1;
+            document.getElementById('game-level-disp').innerText = gameLevel;
         }
+
+        /* --- GAME LOGIC START --- */
+        function initGameLevel() {
+            const board = document.getElementById('game-board');
+            const btn = document.getElementById('start-game-btn');
+            
+            // Difficulty Scaling logic (Max 100 levels)
+            // Lvl 1-10: 3x3, Lvl 11-40: 4x4, Lvl 40+: 5x5
+            if(gameLevel <= 10) gridSize = 3;
+            else if(gameLevel <= 40) gridSize = 4;
+            else gridSize = 5;
+
+            // Pattern length increases every 10 levels
+            let patternLength = 3 + Math.floor(gameLevel / 10);
+            
+            board.innerHTML = '';
+            board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            gameSequence = [];
+            playerSequence = [];
+            
+            // Create Grid
+            for(let i=0; i < gridSize * gridSize; i++) {
+                let tile = document.createElement('div');
+                tile.className = 'game-tile';
+                tile.dataset.index = i;
+                tile.onclick = () => handleTileClick(i, tile);
+                board.appendChild(tile);
+            }
+
+            // Generate Pattern
+            for(let i=0; i < patternLength; i++) {
+                gameSequence.push(Math.floor(Math.random() * (gridSize * gridSize)));
+            }
+
+            btn.style.display = 'none';
+            document.getElementById('game-status').innerText = "Memorize Pattern...";
+            
+            // Play Pattern
+            let speed = Math.max(400, 800 - (gameLevel * 5)); // Gets faster
+            let delay = 0;
+            
+            gameSequence.forEach((index, i) => {
+                setTimeout(() => {
+                    let tiles = document.querySelectorAll('.game-tile');
+                    tiles[index].classList.add('active');
+                    setTimeout(() => tiles[index].classList.remove('active'), speed/2);
+                }, delay);
+                delay += speed;
+            });
+
+            setTimeout(() => {
+                isGameInputActive = true;
+                document.getElementById('game-status').innerText = "Repeat Pattern!";
+            }, delay);
+        }
+
+        function handleTileClick(index, tile) {
+            if(!isGameInputActive) return;
+
+            tile.classList.add('active');
+            setTimeout(() => tile.classList.remove('active'), 200);
+
+            playerSequence.push(index);
+
+            // Check correctness immediately
+            const currentStep = playerSequence.length - 1;
+            
+            if(playerSequence[currentStep] !== gameSequence[currentStep]) {
+                // WRONG
+                isGameInputActive = false;
+                tile.classList.add('wrong');
+                document.getElementById('game-status').innerText = "Wrong! Try Again.";
+                document.getElementById('start-game-btn').innerText = "Retry Level";
+                document.getElementById('start-game-btn').style.display = 'block';
+            } else {
+                // CORRECT STEP
+                if(playerSequence.length === gameSequence.length) {
+                    // LEVEL COMPLETE
+                    isGameInputActive = false;
+                    document.getElementById('game-status').innerText = "Correct! +10 Coins";
+                    
+                    // Update Firebase
+                    const newCoins = (parseFloat(currentUser.coins || 0) + 10).toFixed(3);
+                    const nextLevel = gameLevel + 1;
+                    
+                    db.ref('users/' + currentUser.email.replace(/\./g, '_')).update({
+                        coins: newCoins,
+                        gameLevel: nextLevel
+                    });
+
+                    setTimeout(() => {
+                        document.getElementById('start-game-btn').innerText = "Start Level " + nextLevel;
+                        document.getElementById('start-game-btn').style.display = 'block';
+                    }, 1000);
+                }
+            }
+        }
+        /* --- GAME LOGIC END --- */
 
         function handleTap(e) {
             const key = currentUser.email.replace(/\./g, '_');
@@ -403,14 +562,11 @@
             if(navigator.vibrate) navigator.vibrate(40);
         }
 
-        // Validation Functions
         function isValidEmail(email) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
         function isStrongPassword(password) {
-            // Regex: At least 1 Upper, 1 Number, 1 Special Char, and reasonable length
-            // Special chars allowed: !@#$%^&* etc
             return /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{6,}$/.test(password);
         }
 
@@ -421,7 +577,6 @@
             const uname = document.getElementById('reg-username').value;
             const refBy = document.getElementById('reg-ref').value;
 
-            // NO. 1 & 2: Validations
             if(!email || !pass || !name || !uname) return alert("Fill all fields");
             if(userIP === "Loading...") return alert("Wait for IP detection");
             
@@ -437,7 +592,6 @@
                 if(snapshot.exists()) return alert("Device already has an account! (Notice Rule)");
                 
                 const key = email.replace(/\./g, '_');
-                // Check if email already used
                 db.ref('users/' + key).once('value', emailSnap => {
                     if(emailSnap.exists()) return alert("Email already registered!");
 
@@ -445,22 +599,20 @@
                     
                     const newUser = {
                         name, username: uname, email, pass, 
-                        coins: 0, referralCode: refCode, ip: userIP
+                        coins: 0, referralCode: refCode, ip: userIP,
+                        gameLevel: 1 // Init Game Level
                     };
 
                     db.ref('users/' + key).set(newUser).then(() => {
-                        // NO. 3: Handle Referral Logic (Give bonus to referrer)
                         if(refBy) {
                             db.ref('users').orderByChild('referralCode').equalTo(refBy).once('value', refSnap => {
                                 if(refSnap.exists()) {
                                     const referrerKey = Object.keys(refSnap.val())[0];
                                     const referrerData = refSnap.val()[referrerKey];
                                     
-                                    // Add 200 coins to referrer
                                     const updatedCoins = (parseFloat(referrerData.coins || 0) + 200).toFixed(3);
                                     db.ref('users/' + referrerKey).update({ coins: updatedCoins });
 
-                                    // Add to referrer's list
                                     db.ref('users/' + referrerKey + '/referrals').push({
                                         name: name,
                                         bonus: 200,
@@ -491,20 +643,15 @@
             });
         }
 
-        // NO. 5: Strict Ad Verification
         function startTask(id, amount) {
             const taskFunc = window['show_' + id];
-            
             if(typeof taskFunc === 'function') {
-                // Assuming the SDK returns a Promise (Standard for Monetag)
                 taskFunc().then(() => {
                     reward(amount);
                 }).catch(e => {
-                    // Ad was closed early or failed
                     alert("Task incomplete! Please watch the full ad.");
                 });
             } else {
-                // If function doesn't exist (e.g. AdBlocker active)
                 alert("Ad failed to load. Please disable AdBlocker and try again. No coins added.");
             }
         }
